@@ -1,0 +1,62 @@
+-- This file has been generated from package.yaml by hpack version 0.20.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: af85462565a5ad273db27a56ca407607a263ab2cb9e951447882ffee1084c6de
+
+name:           FP-Softwareprojekt
+version:        0.1.0.0
+description:    Please see the README on Github at <https://github.com/BB20101997/FP-Softwareprojekt#readme>
+homepage:       https://github.com/BB20101997/FP-Softwareprojekt#readme
+bug-reports:    https://github.com/BB20101997/FP-Softwareprojekt/issues
+author:         Bennet Bleßmann, Sven Korfmann
+maintainer:     bennet-blessmann@t-online.de
+copyright:      2018 Bennet Bleßmann, Sven Korfmann
+license:        MIT
+license-file:   LICENSE
+build-type:     Simple
+cabal-version:  >= 1.10
+
+extra-source-files:
+    ChangeLog.md
+    README.md
+
+source-repository head
+  type: git
+  location: https://github.com/BB20101997/FP-Softwareprojekt
+
+library
+  hs-source-dirs:
+      src
+  build-depends:
+      base >=4.7 && <5
+  exposed-modules:
+      Lib
+  other-modules:
+      Paths_FP_Softwareprojekt
+  default-language: Haskell2010
+
+executable FP-Softwareprojekt-exe
+  main-is: Main.hs
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      FP-Softwareprojekt
+    , base >=4.7 && <5
+  other-modules:
+      Paths_FP_Softwareprojekt
+  default-language: Haskell2010
+
+test-suite FP-Softwareprojekt-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      FP-Softwareprojekt
+    , base >=4.7 && <5
+  other-modules:
+      Paths_FP_Softwareprojekt
+  default-language: Haskell2010
