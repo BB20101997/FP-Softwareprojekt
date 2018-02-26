@@ -7,9 +7,6 @@ module SubstTest where
     import Substitution
     import Test.QuickCheck
 
-    instance (Show Subst) where
-        show = pretty
-
     instance (Arbitrary Subst) where
         arbitrary = do
                         size <- choose (0,5)

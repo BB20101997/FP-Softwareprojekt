@@ -4,6 +4,9 @@ module Substitution where
 
     data Subst = Subst [(VarIndex, Term)]
 
+    instance (Show Subst) where
+        show = pretty
+
     empty::Subst
     empty = Subst []
 
