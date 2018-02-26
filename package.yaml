@@ -21,6 +21,7 @@ description:         Please see the README on Github at <https://github.com/BB20
 
 dependencies:
 - base >= 4.7 && < 5
+- parsec
 
 library:
   source-dirs: src
