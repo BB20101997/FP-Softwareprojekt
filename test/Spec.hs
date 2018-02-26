@@ -1,5 +1,6 @@
-import SubstTest
+import qualified SubstTest
 main :: IO ()
 main = do
-            runTests
+            putStrLn "Running Substitution Test:"
+            SubstTest.runTests
             return ()
