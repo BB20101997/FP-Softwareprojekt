@@ -1,3 +1,7 @@
+module Pretty
+  ( pretty, prettyProg, prettyNextRules, prettyRule, prettyTerm, prettyIndex
+  ) where
+
 import Type
 
 pretty:: a ->String
