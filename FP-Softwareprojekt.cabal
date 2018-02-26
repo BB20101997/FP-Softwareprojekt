@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: adcb147ddcf2db62429c347e6cd0d7d3f7f7543ebecdac133d85e1158d2d7fbb
+-- hash: 8142dcff212b6f2d827012447b450713a18eb772095068ecd2da8fe5aa8f6b32
 
 name:           FP-Softwareprojekt
 version:        0.1.0.0
@@ -31,9 +31,11 @@ library
   build-depends:
       base >=4.7 && <5
   exposed-modules:
-      Lib
       Pretty
+      Substitution
+      ToBeNamed
       Type
+      Unifikation
   other-modules:
       Paths_FP_Softwareprojekt
   default-language: Haskell2010
@@ -61,5 +63,6 @@ test-suite FP-Softwareprojekt-test
     , QuickCheck
     , base >=4.7 && <5
   other-modules:
+      SubstTest
       Paths_FP_Softwareprojekt
   default-language: Haskell2010
