@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b5c98368db52595d3afe9dd1559ae067f782f743e4f99cb5ab32a3197861c7ad
+-- hash: 8142dcff212b6f2d827012447b450713a18eb772095068ecd2da8fe5aa8f6b32
 
 name:           FP-Softwareprojekt
 version:        0.1.0.0
@@ -31,9 +31,9 @@ library
   build-depends:
       base >=4.7 && <5
   exposed-modules:
-      Lib
       Pretty
       Substitution
+      ToBeNamed
       Type
       Unifikation
   other-modules:

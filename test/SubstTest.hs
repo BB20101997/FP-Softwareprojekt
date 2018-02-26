@@ -1,6 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 module SubstTest where
     import Type
+    import ToBeNamed
     import Substitution
     import Test.QuickCheck
 
