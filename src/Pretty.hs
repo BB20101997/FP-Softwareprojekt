@@ -6,8 +6,10 @@ module Pretty where
  instance (Pretty Term) where
   pretty (Var x )                   = 'A':show(x)
   pretty (Comb "." (x:(Var xs:[]))) = "[ "++(pretty x)++"| "++(pretty (Var xs))++" ]"
+  pretty (Comb "." (x:[]))          = "[ "++(pretty x)++" ]"
   pretty (Comb "." (x:xs))          = "[ "++(pretty x)++", "++(pretty xs) ++" ]"
   pretty (Comb y [] )               = y
+  pretty (Comb y (x:[]) )           = y++"( "++(pretty x)++" )"
   pretty (Comb y (x:xs) )           = y++"( "++(pretty x)++", "++(pretty xs)++" )"
 
  instance (Pretty b) => (Pretty [b] ) where
