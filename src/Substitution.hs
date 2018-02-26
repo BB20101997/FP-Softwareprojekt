@@ -38,9 +38,9 @@ module Substitution where
 
     instance (Pretty Subst) where
         pretty (Subst []) = "{}"
-        pretty (Subst (head:tail)) = "{ "
+        pretty (Subst (head:tail)) = "{"
                                         ++ (substTupToString head)
                                         ++ [ x |tupel<-tail,x <- ","++ (substTupToString tupel) ]
-                                        ++ " }"
+                                        ++ "}"
 
 
