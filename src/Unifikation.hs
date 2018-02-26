@@ -23,10 +23,10 @@ module Unifikation where
                         (Just ((Var index),r))  ->  if (index `isIn` r) then
                                                         Nothing -- substituted var is part of the substitution
                                                     else let
-                                                            uni = (index,r)
-                                                         in case unify (apply [uni] t1) (apply [uni] t2) of
+                                                            uni = Subst [(index,r)]
+                                                         in case unify (apply uni t1) (apply uni t2) of
                                                                 Nothing -> Nothing --further substitution fails
-                                                                Just set -> Just (uni:set) --further substitution succeeded appending our substitution
+                                                                Just set -> Just (compose uni set) --further substitution succeeded appending our substitution
                         (Just _)                  -> Nothing --trying to substitute a Term for another is not a Variable
 
 
