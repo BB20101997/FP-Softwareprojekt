@@ -12,11 +12,7 @@ module Pretty where
 
  instance (Pretty b) => (Pretty [b] ) where
   pretty (x:xs)  = (pretty x )++", "++pretty xs
-
-
-
- 
-
+  pretty []      = ""
 
 {-
 pretty (Prog w)     = prettyProg w
