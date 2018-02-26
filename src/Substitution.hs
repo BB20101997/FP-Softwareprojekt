@@ -1,8 +1,8 @@
 module Substitution where
     import Type
     import Pretty
-    data Subst = Subst [(VarIndex, Term)]
 
+    data Subst = Subst [(VarIndex, Term)]
 
     empty::Subst
     empty = Subst []
