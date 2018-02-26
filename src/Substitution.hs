@@ -13,7 +13,7 @@ module Substitution where
     apply::Subst -> Term -> Term
     apply (Subst [(index, term)]) orig@(Var vIndex) | index == vIndex  = term
                                                     | otherwise        = orig
-    apply (Subst subst) orig@(Var _)   = foldl (\var term -> apply (Subst [term]) var) orig subst
+    apply (Subst subst)           orig@(Var _)   = foldl (\var term -> apply (Subst [term]) var) orig subst
     apply subst (Comb s term) = Comb s (map (apply subst) term)
 
     {-
@@ -22,11 +22,11 @@ module Substitution where
     -}
     insertSubst::Subst->(VarIndex, Term)->Subst
     insertSubst (Subst [])                      a                                     = Subst [a]
-    insertSubst (Subst (head@(index, term):xs)) ins@(aIndex, aTerm) | index == aIndex = (Subst  (head:xs))
-                                                                    | otherwise       = let
-                                                                                            (Subst tail) = (insertSubst (Subst xs) ins)
-                                                                                        in
-                                                                                            (Subst  (head:tail))
+    insertSubst (Subst (head@(index, _):xs)) ins@(aIndex, _) | index == aIndex = (Subst  (head:xs))
+                                                             | otherwise       = let
+                                                                                    (Subst tail) = (insertSubst (Subst xs) ins)
+                                                                                 in
+                                                                                    (Subst  (head:tail))
 
     compose::Subst->Subst->Subst
     compose (Subst []) a          = a
@@ -42,5 +42,3 @@ module Substitution where
                                         ++ (substTupToString head)
                                         ++ [ x |tupel<-tail,x <- ","++ (substTupToString tupel) ]
                                         ++ "}"
-
-
