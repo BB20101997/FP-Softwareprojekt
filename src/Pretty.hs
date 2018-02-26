@@ -4,11 +4,16 @@ module Pretty where
    pretty:: a -> String
 
  instance (Pretty Term) where
-  pretty (Var x )                   = show ('A'+(show(x)))
-  pretty (Comb "." (x:(Var xs:[]))) = "[ "++(pretty x)++"| "++(pretty xs)++" ]"
+  pretty (Var x )                   = 'A':show(x)
+  pretty (Comb "." (x:(Var xs:[]))) = "[ "++(pretty x)++"| "++(pretty (Var xs))++" ]"
   pretty (Comb "." (x:xs))          = "[ "++(pretty x)++", "++(pretty xs) ++" ]"
   pretty (Comb y [] )               = y
   pretty (Comb y (x:xs) )           = y++"( "++(pretty x)++", "++(pretty xs)++" )"
+
+ instance (Pretty b) => (Pretty [b] ) where
+  pretty (x:xs)  = (pretty x )++", "++pretty xs
+
+
 
  
 

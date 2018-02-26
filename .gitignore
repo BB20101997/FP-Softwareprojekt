@@ -20,3 +20,5 @@ cabal.project.local
 .HTF/
 /.idea/
 *.iml
+/out/
+*.cabal
