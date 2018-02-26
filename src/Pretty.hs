@@ -11,8 +11,9 @@ module Pretty where
   pretty (Comb y (x:xs) )           = y++"( "++(pretty x)++", "++(pretty xs)++" )"
 
  instance (Pretty b) => (Pretty [b] ) where
-  pretty (x:xs)  = (pretty x )++", "++pretty xs
   pretty []      = ""
+  pretty [x]     = pretty x
+  pretty (x:xs)  = (pretty x )++", "++pretty xs
 
 {-
 pretty (Prog w)     = prettyProg w
