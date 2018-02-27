@@ -3,7 +3,7 @@ module SubstTest where
     import Debug.Trace
     import Type
     import Pretty
-    import ToBeNamed
+    import Lib
     import Substitution
     import Test.QuickCheck
 

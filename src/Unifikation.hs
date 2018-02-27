@@ -1,6 +1,6 @@
 module Unifikation where
     import Type
-    import ToBeNamed
+    import Lib
     import Substitution
 
 

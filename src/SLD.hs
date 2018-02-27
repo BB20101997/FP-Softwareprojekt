@@ -1,7 +1,7 @@
 module SLD where
     import Type
     import Data.Maybe
-    import ToBeNamed
+    import Lib
     import Substitution
     import Unifikation
 

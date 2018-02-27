@@ -8,4 +8,4 @@ module Main where
     main = do
             putStrLn "Welcome to Simple Prolog!"
             putStrLn "Type \":help\" for help."
-            readPromptWithFile initState
+            readPrompt initState

@@ -1,4 +1,4 @@
-module ToBeNamed where
+module Lib where
     import Type
 
     instance (Eq Term) where
