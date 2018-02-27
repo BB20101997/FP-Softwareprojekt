@@ -2,10 +2,10 @@ module Substitution where
     import Type
     import Pretty
 
-    data Subst = Subst [(VarIndex, Term)]
+    newtype Subst = Subst [(VarIndex, Term)]
 
     instance (Show Subst) where
-        show = pretty
+       show = pretty
 
     empty::Subst
     empty = Subst []
@@ -20,28 +20,35 @@ module Substitution where
     apply subst                   (Comb s term)  = Comb s (map (apply subst) term)
 
     {-
+        apply for a list of Terms resulting in a new goal
+    -}
+    (->>)::Subst->[Term]->Goal
+    (->>) subst terms = Goal (map (apply subst) terms)
+
+    {-
             Inserts a Substitution Tuple into a Substitution Tuple Set
                 if no Substitution existst fo the given Variable Index
     -}
     insertSubst::Subst->(VarIndex, Term)->Subst
     insertSubst (Subst [])                      a                              = Subst [a]
-    insertSubst (Subst (head@(index, _):xs)) ins@(aIndex, _) | index == aIndex = (Subst  (head:xs))
+    insertSubst (Subst (head@(index, _):xs)) ins@(aIndex, _) | index == aIndex = Subst  (head:xs)
                                                              | otherwise       = let
-                                                                                    (Subst tail) = (insertSubst (Subst xs) ins)
+                                                                                    (Subst tail) = insertSubst (Subst xs) ins
                                                                                  in
-                                                                                    (Subst  (head:tail))
+                                                                                    Subst  (head:tail)
 
+    --todo fix compose
     compose::Subst->Subst->Subst
     compose (Subst []) a          = a
     compose a          (Subst []) = a
     compose (Subst a)  b          = foldl insertSubst b a
 
     substTupToString::(VarIndex, Term)->String
-    substTupToString (index, term) = (pretty (Var index))++" -> "++(pretty (term))
+    substTupToString (index, term) = pretty (Var index)++" -> "++ pretty term
 
     instance (Pretty Subst) where
         pretty (Subst []) = "{}"
         pretty (Subst (head:tail)) = "{"
-                                        ++ (substTupToString head)
-                                        ++ [ x |tupel<-tail,x <- ","++ (substTupToString tupel) ]
+                                        ++ substTupToString head
+                                        ++ [ x |tupel<-tail,x <- ","++ substTupToString tupel ]
                                         ++ "}"

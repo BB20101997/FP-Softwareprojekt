@@ -10,4 +10,13 @@ module ToBeNamed where
     isIn a (Var b) = a==b
     isIn a (Comb b tb) = foldl (||) False (map (isIn a) tb)
 
+    varsInUse::Term->[Int]
+    varsInUse (Var v)        = [v]
+    varsInUse (Comb _ terms) = [ x |term<-terms, x<-(varsInUse term)]
 
+    {-
+        A function that maps the content of a Just and preserves Nothing
+    -}
+    maybeMap::(a->b)->(Maybe a)->(Maybe b)
+    maybeMap _ Nothing = Nothing
+    maybeMap f (Just a) = Just (f a)
