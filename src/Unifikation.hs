@@ -1,4 +1,4 @@
-module Unifikation where
+module Unifikation(unify) where
     import Lib
     import Substitution
 
