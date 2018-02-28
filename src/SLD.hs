@@ -4,9 +4,15 @@ module SLD where
     import Lib
     import Substitution
     import Unifikation
+    import Pretty
 
     newtype SLDTree = SLDTree [(Subst, SLDTree)]
                 deriving Show
+
+    instance Pretty SLDTree where
+        prettyWithVars v (SLDTree stuff) = "SLDTree "++ prettyWithVars v stuff
+
+    
 
     {-
         For a given Program and Goal produces the corresponding SLDTree based on FIRST Selection-strategy
@@ -15,7 +21,7 @@ module SLD where
     sld programm@(Prog rules) goal = SLDTree $ catMaybes [substitute programm rule goal | rule <- rules]
         where
             substitute::Prog->Rule->Goal->Maybe (Subst,SLDTree)
-            substitute _    _    (Goal [])   = Just (empty,SLDTree [])
+            substitute _    _    (Goal [])   = Nothing
             substitute prog rule goal        = let
                                                 (Goal (term:rest)) = goal
                                                 (pat :- cond)      = rule >< goal
