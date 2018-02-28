@@ -1,5 +1,4 @@
-module SLD where
-    import Data.Bifunctor
+module SLD(sld) where
     import Data.Char
     import Data.Maybe
     import Lib
