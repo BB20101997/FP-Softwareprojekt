@@ -5,7 +5,7 @@ module Unifikation where
 
 
 
-    ds::Term -> Term -> (Maybe (Term, Term))
+    ds::Term -> Term -> Maybe (Term, Term)
     ds t1              t2              | t1==t2                     = Nothing       --already equal nothing to substitute
     ds t1              t2@(Var _)                                   = Just (t2,t1)  --t2 is var can be substituted by t1
     ds t1@(Var _)      t2                                           = Just (t1,t2)  --t1 is var can be substituted by t2
@@ -20,7 +20,7 @@ module Unifikation where
     unify::Term -> Term -> Maybe Subst
     unify t1 t2 =   case ds t1 t2  of
                         Nothing                 ->  Just empty --already unified
-                        (Just ((Var index),r))  ->  if (index `isIn` r) then
+                        (Just (Var index,r))  ->  if index `isIn` r then
                                                         Nothing -- substituted var is part of the substitution
                                                     else let
                                                             uni = Subst [(index,r)]
