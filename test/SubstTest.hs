@@ -10,8 +10,9 @@ module SubstTest where
     instance (Arbitrary Subst) where
         arbitrary = do
                         size <- choose (0,5)
-                        tupelVector <- vectorOf size arbitrary
-                        return (Subst tupelVector)
+                        indices <- vectorOf size arbitrary
+                        results <- vectorOf size arbitrary
+                        return $ foldl compose empty $ zipWith single indices results
 
     instance (Arbitrary Term) where
         arbitrary = frequency [(75,arbitraryVar),(25,arbitraryTerm)]
@@ -29,7 +30,7 @@ module SubstTest where
                                     return (Comb tName tList)
 
     prop_substTest::Subst -> Subst -> Term -> Bool
-    prop_substTest s1 s2 t = (apply (compose s1 s2) t) == (apply s2 (apply s1 t))
+    prop_substTest s1 s2 t = apply (compose s1 s2) t == apply s1 (apply s2 t)
 
     return[]
     runTests = $quickCheckAll

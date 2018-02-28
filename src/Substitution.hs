@@ -47,7 +47,6 @@ module Substitution where
                                                                                  in
                                                                                     Subst  (head:tail)
 
-    --todo fix compose
     compose::Subst->Subst->Subst
     compose (Subst []) a          = a
     compose a          (Subst []) = a
