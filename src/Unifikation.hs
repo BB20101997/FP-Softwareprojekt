@@ -1,5 +1,4 @@
 module Unifikation where
-    import Type
     import Lib
     import Substitution
 

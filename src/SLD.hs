@@ -1,64 +1,59 @@
 module SLD where
-    import Type
+    import Data.Bifunctor
+    import Data.Char
     import Data.Maybe
+    import Pretty
     import Lib
     import Substitution
     import Unifikation
-    import Pretty
-    import Data.Bifunctor
-    import Data.Char
-
-    data SLDTree = SLDTree [(Subst, SLDTree)] |  Success
-                deriving Show
-
-    instance Pretty SLDTree where
-        prettyWithVars _  Success = "Success"
-        prettyWithVars v (SLDTree stuff)   = "SLDTree ["++ prettyWithVars v stuff++"]"
 
     unpack::SLDTree->[(Subst,SLDTree)]
     unpack (SLDTree pack) = pack
 
-    call::Rule
-    call = Comb "call" [] :- []
-
-    is::Rule
-    is = Comb "is" [] :- []
+    predefinedRulesMap::[(String,BuildInRule)]
+    predefinedRulesMap = [("call",callSubstitution),("is",evalSubstitution),("not",notSubstitution),("\\+",notSubstitution)]
 
     predefinedRules::[Rule]
-    predefinedRules = [call,is]
+    predefinedRules = [Comb x [] :- [] | (x,_)<-predefinedRulesMap]
+
 
     {-
         For a given Program and Goal produces the corresponding SLDTree based on FIRST Selection-strategy
     -}
-    sld::Prog->Goal->SLDTree
-    sld program@(Prog rules) goal = SLDTree $ catMaybes [substitute program rule goal | rule <- predefinedRules++rules]
+    sld::Strategy->Prog->Goal->SLDTree
+    sld strategy program@(Prog rules) goal = SLDTree $ catMaybes [substitute rule strategy program goal | rule <- predefinedRules++rules]
         where
-            substitute::Prog->Rule->Goal->Maybe (Subst,SLDTree)
-            substitute _    _    (Goal [])               = Just (empty,Success)
-            substitute prog (Comb "call"  _ :- _) goal   = callSubstitution prog goal  --higher Order Predicates
-            substitute prog (Comb "is"    _ :- _) goal   = evalSubstitution prog goal  --is/eval
-            substitute prog rule goal@(Goal (term:rest)) =  let
-                                                                (pat :- cond)      = rule >< goal
-                                                                unifier            = unify term pat
-                                                            in case unifier of
-                                                                Nothing     -> Nothing
-                                                                Just subst  ->  let
-                                                                                    newGoal = subst->>(cond++rest)
-                                                                                    subTree = sld prog newGoal
-                                                                                in case newGoal of
-                                                                                    Goal [] -> Just (subst,Success)
-                                                                                    _       -> Just (subst,subTree)
+            substitute::Rule->BuildInRule
+            substitute  _              _        _   (Goal [])                                        = Just (empty,Success)
+            substitute (Comb a _ :- _) strategy prog goal | Just func <- lookup a predefinedRulesMap = func strategy prog goal
+            substitute  rule           strategy prog goal                                            = baseSubstitution rule strategy prog goal
 
-    callSubstitution::Prog->Goal->Maybe (Subst,SLDTree)
-    callSubstitution prog (Goal (term@(Comb "call" (Comb a args:restArgs)):restGoal)) = Just (Subst[],sld prog (Goal (Comb a (args++restArgs):restGoal)))
-    callSubstitution _    _                                  = Nothing
+    baseSubstitution::Rule->BuildInRule
+    baseSubstitution rule strategy prog goal@(Goal (term:rest)) =   let
+                                                                        (pat :- cond)      = rule >< goal
+                                                                        unifier            = unify term pat
+                                                                    in case unifier of
+                                                                        Nothing     -> Nothing
+                                                                        Just subst  ->  let
+                                                                                            newGoal = subst->>(cond++rest)
+                                                                                            subTree = sld strategy prog newGoal
+                                                                                        in case newGoal of
+                                                                                            Goal [] -> Just (subst,Success)
+                                                                                            _       -> Just (subst,subTree)
 
-    evalSubstitution::Prog->Goal->Maybe (Subst,SLDTree)
-    evalSubstitution prog (Goal [Comb "is" [Var i, term]])     |  Just (Left  a) <- eval term = Just (single i (Comb (              show a) []), Success)
-                                                               |  Just (Right a) <- eval term = Just (single i (Comb (map toLower $ show a) []), Success)
-    evalSubstitution prog (Goal (Comb "is" [Var i,term]:rest)) |  Just (Left  a) <- eval term = Just (single i (Comb (              show a) []), sld prog (Goal rest))
-                                                               |  Just (Right a) <- eval term = Just (single i (Comb (map toLower $ show a) []), sld prog (Goal rest))
-    evalSubstitution _    _                                                                   = Nothing
+    callSubstitution::BuildInRule
+    callSubstitution strategy prog (Goal (term@(Comb "call" (Comb a args:restArgs)):restGoal)) = Just (Subst[],sld strategy prog (Goal (Comb a (args++restArgs):restGoal)))
+    callSubstitution _ _    _                                  = Nothing
+
+    evalSubstitution::BuildInRule
+    evalSubstitution _        prog (Goal [Comb "is" [Var i, term]])     |  Just (Left  a) <- eval term = Just (single i (Comb (              show a) []), Success)
+                                                                        |  Just (Right a) <- eval term = Just (single i (Comb (map toLower $ show a) []), Success)
+    evalSubstitution strategy prog (Goal (Comb "is" [Var i,term]:rest)) |  Just (Left  a) <- eval term = Just (single i (Comb (              show a) []), sld strategy prog (Goal rest))
+                                                                        |  Just (Right a) <- eval term = Just (single i (Comb (map toLower $ show a) []), sld strategy prog (Goal rest))
+    evalSubstitution _        _    _                                                                   = Nothing
+
+    notSubstitution::BuildInRule
+    notSubstitution _ _ _= Nothing
 
     {-
         given a Rule and a Goal will replace all Variables in then rule that are also in then Goal by new ones

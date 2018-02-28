@@ -1,21 +1,5 @@
 module Substitution where
-    import Type
-    import Pretty
-
-    newtype Subst = Subst [(VarIndex, Term)]
-
-    instance (Show Subst) where
-       show = pretty
-
-    instance (Pretty Subst) where
-        prettyWithVars v (Subst []) = "{}"
-        prettyWithVars v (Subst (head:tail)) = "{"
-                                        ++ substTupToString v head
-                                        ++ [ x |tuple<-tail,x <- ","++ substTupToString v tuple ]
-                                        ++ "}"
-
-    substTupToString::[(VarIndex,String)]->(VarIndex, Term)->String
-    substTupToString v (index, term) = prettyWithVars v (Var index)++" -> "++ prettyWithVars v term
+    import Lib
 
     empty::Subst
     empty = Subst []

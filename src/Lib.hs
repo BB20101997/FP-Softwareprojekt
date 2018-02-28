@@ -1,12 +1,51 @@
-module Lib where
+module Lib(module Lib,module Type) where
+    import Text.Read
     import Type
     import Parser
-    import Text.Read
+    import Pretty
+
+-- Types
+
+    --REPL Types
+    type State = (Strategy,Prog)
+    type Action = State -> String -> IO ()
+
+    --Strategy Types
+    type Strategy = SLDTree -> [Subst]
+
+    --Substitution Types
+    newtype Subst = Subst [(VarIndex, Term)]
+
+    --SLDTree Types
+    type BuildInRule = Strategy->Prog->Goal->Maybe (Subst,SLDTree)
+    data SLDTree = SLDTree [(Subst, SLDTree)] |  Success
+                deriving Show
+
+-- Instances
+
+    instance (Show Subst) where
+       show = pretty
+
+    instance (Pretty Subst) where
+        prettyWithVars v (Subst []) = "{}"
+        prettyWithVars v (Subst (head:tail)) = "{"
+                                        ++ substTupToString v head
+                                        ++ [ x |tuple<-tail,x <- ","++ substTupToString v tuple ]
+                                        ++ "}"
+
+    instance Pretty SLDTree where
+        prettyWithVars _  Success = "Success"
+        prettyWithVars v (SLDTree stuff)   = "SLDTree ["++ prettyWithVars v stuff++"]"
 
     instance (Eq Term) where
         (==) (Var i) (Var i2) = i == i2
         (==) (Comb s r) (Comb s2 r2) | s==s2 = all (uncurry (==)) (zip r r2)
         (==) _ _ = False
+
+--other stuff
+
+    substTupToString::[(VarIndex,String)]->(VarIndex, Term)->String
+    substTupToString v (index, term) = prettyWithVars v (Var index)++" -> "++ prettyWithVars v term
 
     isIn::VarIndex->Term->Bool
     isIn a (Var b) = a==b

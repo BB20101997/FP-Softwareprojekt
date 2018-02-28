@@ -1,12 +1,10 @@
 module Strategy where
-    import Type
     import Pretty
+    import Lib
     import SLD
     import Substitution
     import Debug.Trace
     import Data.Bifunctor
-
-    type Strategy = SLDTree -> [Subst]
 
     mapFunction::Strategy->(Subst        ,SLDTree) ->[Subst]
     mapFunction _          (substitution ,Success) = [substitution]

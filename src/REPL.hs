@@ -1,6 +1,5 @@
 module REPL where
     --Read Eval Print Loop
-    import Type
     import Parser
     import Pretty
     import System.IO
@@ -8,9 +7,6 @@ module REPL where
     import Substitution
     import SLD
     import Lib
-
-    type State = (Strategy,Prog)
-    type Action = State -> String -> IO ()
 
     {-
         Todo 3. Antwortsubstitution
@@ -43,7 +39,7 @@ module REPL where
     parseGoalAndEvalGoal state@(strategy,program) input = case parseWithVars input of
                                                           Left error -> putStrLn error >> readPrompt state
                                                           Right (goal,vars) -> let
-                                                                                    sldTree   = sld program goal
+                                                                                    sldTree   = sld strategy program goal
                                                                                     solutions = strategy sldTree
                                                                                in do
                                                                                     --print sldTree

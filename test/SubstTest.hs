@@ -1,7 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 module SubstTest where
     import Debug.Trace
-    import Type
     import Pretty
     import Lib
     import Substitution
