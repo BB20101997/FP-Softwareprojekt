@@ -1,43 +1,30 @@
 module Pretty where
- import Type
- class Pretty a where
-   pretty:: a -> String
+    import Data.Maybe
+    import Type
 
- instance (Pretty Term) where
-  pretty (Var x )                   = 'A':show(x)
-  pretty (Comb "." (x:(Var xs:[]))) = "[ "++(pretty x)++"| "++(pretty (Var xs))++" ]"
-  pretty (Comb "." (x:[]))          = "[ "++(pretty x)++" ]"
-  pretty (Comb "." (x:xs))          = "[ "++(pretty x)++", "++(pretty xs) ++" ]"
-  pretty (Comb y [] )               = y
-  pretty (Comb y (x:[]) )           = y++"( "++(pretty x)++" )"
-  pretty (Comb y (x:xs) )           = y++"( "++(pretty x)++", "++(pretty xs)++" )"
+    defaultVarNames::[(VarIndex,String)]
+    defaultVarNames = [(i,'A':show i)|i<-[0..]]
 
- instance (Pretty b) => (Pretty [b] ) where
-  pretty []      = ""
-  pretty [x]     = pretty x
-  pretty (x:xs)  = (pretty x )++", "++pretty xs
-
-{-
-pretty (Prog w)     = prettyProg w
-pretty (Var x)      = prettyTerm (Var x)
-pretty (Comb y z)   = prettyTerm (Comb y z)
+    class Pretty a where
+        pretty:: a -> String
+        pretty = prettyWithVars defaultVarNames
+        prettyWithVars :: [(VarIndex, String)] -> a -> String
+        prettyWithVars _ = pretty
 
 
-prettyProg:: [Rule] ->String
-prettyProg []        = ""
-prettyProg (x : xs)  = (prettyRule x) ++ (prettyNextRules xs)
+    instance (Pretty Term) where
+        prettyWithVars v (Var x)               = fromMaybe (fromJust $ x `lookup` v) (x `lookup` v)
+        prettyWithVars v (Comb "." [x,Var xs]) = "[ " ++ prettyWithVars v x ++ "| " ++ prettyWithVars v (Var xs) ++ " ]"
+        prettyWithVars v (Comb "." [x])        = "[ " ++ prettyWithVars v x ++ " ]"
+        prettyWithVars v (Comb "." (x:xs))     = "[ " ++ prettyWithVars v x ++ ", " ++ prettyWithVars v xs ++ " ]"
+        prettyWithVars v (Comb y [])           = y
+        prettyWithVars v (Comb y [x])          = y ++ "( " ++ pretty x ++ " )"
+        prettyWithVars v (Comb y (x:xs))       = y ++ "( " ++ pretty x ++ ", " ++ pretty xs ++ " )"
 
-prettyNextRules:: [Rule] ->String
-prettyNextRules []        = ""
-prettyNextRules (x : xs)  = ", " ++ (pretty x) ++ (prettyNextRules xs)
+    instance (Pretty b) => (Pretty [b] ) where
+        prettyWithVars v []      = ""
+        prettyWithVars v [x]     = prettyWithVars v x
+        prettyWithVars v (x:xs)  = prettyWithVars v x ++ ", " ++ prettyWithVars v xs
 
-
-prettyRule:: Term -> [Term] ->String
-prettyRule a b = "true" --Testweise
-
-prettyTerm:: Term ->String
-prettyTerm Var x = prettyIndex x
-
-prettyIndex:: VarIndex ->String
-prettyIndex x = show ('A'+x)
--}
+    instance (Pretty a,Pretty b)=>Pretty (a,b) where
+        prettyWithVars v (a,b) = '(':prettyWithVars v a++", "++ prettyWithVars v b ++ ")"
