@@ -16,7 +16,6 @@ module REPL where
         Todo 3. Antwortsubstitution
     -}
 
-    --TODO decide if we should set a default else handle undefined strategy where necessary
     initState::State
     initState = (dfs,Prog [])
 
@@ -40,7 +39,6 @@ module REPL where
                                     | ":load " ++ drop 6 input == input  = loadFile  state (drop 6 input)
                                     | otherwise                          = parseGoalAndEvalGoal state input
 
-    --TODO if we decide to not set a default strategy this needs to be handled here
     parseGoalAndEvalGoal::Action
     parseGoalAndEvalGoal state@(strategy,program) input = case parseWithVars input of
                                                           Left error -> putStrLn error >> readPrompt state
@@ -89,7 +87,7 @@ module REPL where
     exit::Action
     exit _ _ = putStrLn "Goodbye"
 
-    printInfo::Action --TODO advanced pretty print would need to have the variable names as part of the state
+    printInfo::Action
     printInfo state@(strategy,Prog []) _      = putStrLn "No aviable predicates, please load file" >> readPrompt state
     printInfo state@(strategy,Prog program) _ = printPredicates(mergesortString (nubString (map showPredicates program))) >> readPrompt state
 
