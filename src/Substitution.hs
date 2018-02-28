@@ -19,20 +19,13 @@ module Substitution where
     (->>)::Subst->[Term]->Goal
     (->>) subst terms = Goal (map (apply subst) terms)
 
-    {-
-            Inserts a Substitution Tuple into a Substitution Tuple Set
-                if no Substitution existst fo the given Variable Index
-    -}
-    insertSubst::Subst->(VarIndex, Term)->Subst
-    insertSubst (Subst [])                      a                              = Subst [a]
-    insertSubst (Subst (head@(index, _):xs)) ins@(aIndex, _) | index == aIndex = Subst  (head:xs)
-                                                             | otherwise       = let
-                                                                                    (Subst tail) = insertSubst (Subst xs) ins
-                                                                                 in
-                                                                                    Subst  (head:tail)
-
     compose::Subst->Subst->Subst
     compose (Subst []) a          = a
     compose a          (Subst []) = a
-    compose (Subst a)  (Subst b)  = Subst (b++a)
-
+    compose (Subst a)  (Subst b)  = Subst $ foldl (combine True) b a
+        where
+            --The boolean determines if the substitution should be inserted at the end
+            combine::Bool->[(VarIndex,Term)]->(VarIndex,Term)->[(VarIndex,Term)]
+            combine True  []                  ins            = [ins]
+            combine False []                  ins            = []
+            combine end   ((index,term):tail) ins@(vIndex,_) = (index, apply (Subst [ins]) term) : combine (end&&(index/=vIndex))  tail ins
