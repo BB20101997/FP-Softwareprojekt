@@ -22,7 +22,7 @@ module REPL where
     readPrompt :: State -> IO ()
     readPrompt state = do
                             putStr "?- "
-                            hFlush stdout --flushing to prevent user staring at an empty Screen
+                            hFlush stdout --make sure user knows we are waiting for him
                             getLine >>= \input -> interpretPrompt state input
 
     fileReadingResult :: State -> Either String Prog -> IO State
@@ -61,14 +61,14 @@ module REPL where
 
     promptFurtherSolutions::[(VarIndex,String)]->[Subst]->IO()
     promptFurtherSolutions vars rest = do
-                                        x <- getChar
-                                        putStrLn ""
+                                        hFlush stdout --make sure user knows we are waiting for him
+                                        x <- getLine
                                         case x of
-                                            ',' -> outputSolutions vars rest    --next result
-                                            '.' -> return ()                    --don't print further results
+                                            "," -> outputSolutions vars rest    --next result
+                                            "." -> return ()                    --don't print further results
                                             _   -> do                           --invalid response, retry
                                                     putStr "Invalid Command '"
-                                                    putChar x
+                                                    putStr x
                                                     putStr "', valid are ',' and '.'!"
                                                     promptFurtherSolutions vars rest
 
@@ -93,12 +93,12 @@ module REPL where
     printInfo state@(strategy,Prog program) _ = printPredicates (map showPredicates program) >> readPrompt state
 
     printPredicates:: [String] -> IO ()
-    printPredicates predicates = putStrLn (foldr (++) "" predicates)
+    printPredicates predicates = putStrLn $ concat predicates
 
     showPredicates:: Rule -> String -- Returns a predicate with number of its arguments, facts are ignored and Rules don't begin with Vars
     showPredicates (factHead :- []) = "" -- Give nothing if it is a fact and not an predicate
     showPredicates (Comb nameOfPredicate listOfArguments :- predicateBody ) = nameOfPredicate++"\\"++
-                                                                               (show (length listOfArguments))++"\n"
+                                                                               show (length listOfArguments)++"\n"
     showPredicates (Var _ :- _) = "" -- Impossible in prolog syntax
 
     printHelp::Action

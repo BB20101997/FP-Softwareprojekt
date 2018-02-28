@@ -13,7 +13,7 @@ module Pretty where
 
 
     instance (Pretty Term) where
-        prettyWithVars v (Var x)               = fromMaybe (fromJust $ x `lookup` v) (x `lookup` v)
+        prettyWithVars v (Var x)               = fromMaybe (fromJust $ x `lookup` defaultVarNames) (x `lookup` v)
         prettyWithVars v (Comb "." [x,Var xs]) = "[ " ++ prettyWithVars v x ++ "| " ++ prettyWithVars v (Var xs) ++ " ]"
         prettyWithVars v (Comb "." [x])        = "[ " ++ prettyWithVars v x ++ " ]"
         prettyWithVars v (Comb "." (x:xs))     = "[ " ++ prettyWithVars v x ++ ", " ++ prettyWithVars v xs ++ " ]"
