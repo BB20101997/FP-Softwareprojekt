@@ -30,7 +30,7 @@ module Unifikation where
                                                             uni = Subst [(index,r)]
                                                          in case unify (apply uni t1) (apply uni t2) of
                                                                 Nothing -> Nothing --further substitution fails
-                                                                Just set -> Just (compose uni set) --further substitution succeeded appending our substitution
+                                                                Just set -> Just (compose set uni) --further substitution succeeded appending our substitution
                         (Just _)                  -> Nothing --trying to substitute a Term for another is not a Variable
 
 
