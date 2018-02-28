@@ -20,15 +20,22 @@ module SLD where
     call::Rule
     call = Comb "call" [] :- []
 
+    is::Rule
+    is = Comb "is" [] :- []
+
+    predefinedRules::[Rule]
+    predefinedRules = [call,is]
+
     {-
         For a given Program and Goal produces the corresponding SLDTree based on FIRST Selection-strategy
     -}
     sld::Prog->Goal->SLDTree
-    sld program@(Prog rules) goal = SLDTree $ catMaybes [substitute program rule goal | rule <- call:rules]
+    sld program@(Prog rules) goal = SLDTree $ catMaybes [substitute program rule goal | rule <- predefinedRules++rules]
         where
             substitute::Prog->Rule->Goal->Maybe (Subst,SLDTree)
             substitute _    _    (Goal [])               = Just (empty,Success)
-            substitute prog (Comb "call"  _ :- _) goal       = callSubstitution prog goal  --higher Order Predicates
+            substitute prog (Comb "call"  _ :- _) goal   = callSubstitution prog goal  --higher Order Predicates
+            substitute prog (Comb "is"    _ :- _) goal   = evalSubstitution prog goal  --is/eval
             substitute prog rule goal@(Goal (term:rest)) =  let
                                                                 (pat :- cond)      = rule >< goal
                                                                 unifier            = unify term pat
@@ -41,9 +48,14 @@ module SLD where
                                                                                     Goal [] -> Just (subst,Success)
                                                                                     _       -> Just (subst,subTree)
 
-            callSubstitution::Prog->Goal->Maybe (Subst,SLDTree)
-            callSubstitution prog (Goal (term@(Comb "call" (Comb a args:restArgs)):restGoal)) = Just (Subst[],sld prog (Goal (Comb a (args++restArgs):restGoal)))
-            callSubstitution _    _                                  = Nothing
+    callSubstitution::Prog->Goal->Maybe (Subst,SLDTree)
+    callSubstitution prog (Goal (term@(Comb "call" (Comb a args:restArgs)):restGoal)) = Just (Subst[],sld prog (Goal (Comb a (args++restArgs):restGoal)))
+    callSubstitution _    _                                  = Nothing
+
+    evalSubstitution::Prog->Goal->Maybe (Subst,SLDTree)
+    evalSubstitution prog (Goal (Comb "is" [Var i,term]:rest)) |  Just (Left a)  <- eval term = Just (single i (Comb (show a) []),sld prog (Goal rest))
+                                                               |  Just (Right a) <- eval term = Just (single i (Comb (show a) []),sld prog (Goal rest))
+    evalSubstitution _    _                                                                   = Nothing
 
     {-
         given a Rule and a Goal will replace all Variables in then rule that are also in then Goal by new ones

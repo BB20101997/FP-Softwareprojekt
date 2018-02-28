@@ -1,5 +1,7 @@
 module Lib where
     import Type
+    import Parser
+    import Text.Read
 
     instance (Eq Term) where
         (==) (Var i) (Var i2) = i == i2
@@ -13,6 +15,34 @@ module Lib where
     varsInUse::Term->[Int]
     varsInUse (Var v)        = [v]
     varsInUse (Comb _ terms) = [ x |term<-terms, x<-varsInUse term]
+
+    eval::Term->Maybe (Either Int Bool)
+    eval (Comb a []) = case (readMaybe::String -> Maybe Int) a of
+                            Just int -> Just $ Left int
+                            Nothing  -> case (readMaybe::String -> Maybe Bool) a of
+                                                Just bool -> Just $ Right bool
+                                                Nothing   -> Nothing
+    eval (Comb op [t1,t2])    | (Just (Left a),Just (Left b)) <-(eval t1,eval t2)  = evalInt op a b
+                              | (Just (Right a),Just (Right b)) <-(eval t1, eval t2) = evalBool op a b
+    eval _ = Nothing
+
+    evalInt::String->Int->Int->Maybe(Either Int Bool)
+    evalInt op a b | op == "+"             = Just $ Left  $ a+b
+                   | op == "-"             = Just $ Left  $ a-b
+                   | op == "*"             = Just $ Left  $ a*b
+                   | op == "div" && b /= 0 = Just $ Left  $ a `div` b
+                   | op == "<"             = Just $ Right $ a < b
+                   | op == ">"             = Just $ Right $ a > b
+                   | op == "<="            = Just $ Right $ a <= b
+                   | op == ">="            = Just $ Right $ a >= b
+                   | op == "=:="           = Just $ Right $ a == b
+                   | op == "=\\="          = Just $ Right $ a /= b
+                   |otherwise              = Nothing
+
+    evalBool::String->Bool->Bool->Maybe(Either Int Bool)
+    evalBool op a b | op == "=:="  = Just $ Right $ a==b
+                    | op == "=\\=" = Just $ Right $ a/=b
+                    | otherwise    = Nothing
 
     {-If order is implemented for chars and list shouldn't nub
      and merge work with List of List as they work with order Types? -}
