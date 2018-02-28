@@ -41,14 +41,14 @@ module Substitution where
     compose::Subst->Subst->Subst
     compose (Subst []) a          = a
     compose a          (Subst []) = a
-    compose (Subst a)  b          = foldl insertSubst b a
+    compose (Subst a)  (Subst b)  = Subst (b++a)
 
-    substTupToString::(VarIndex, Term)->String
-    substTupToString (index, term) = pretty (Var index)++" -> "++ pretty term
+    substTupToString::[(VarIndex,String)]->(VarIndex, Term)->String
+    substTupToString v (index, term) = prettyWithVars v (Var index)++" -> "++ prettyWithVars v term
 
     instance (Pretty Subst) where
-        pretty (Subst []) = "{}"
-        pretty (Subst (head:tail)) = "{"
-                                        ++ substTupToString head
-                                        ++ [ x |tupel<-tail,x <- ","++ substTupToString tupel ]
+        prettyWithVars v (Subst []) = "{}"
+        prettyWithVars v (Subst (head:tail)) = "{"
+                                        ++ substTupToString v head
+                                        ++ [ x |tuple<-tail,x <- ","++ substTupToString v tuple ]
                                         ++ "}"
