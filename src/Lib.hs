@@ -1,7 +1,6 @@
-module Lib(module Lib,module Type) where
+module Lib(module Lib,module Type,module Pretty) where
     import Text.Read
     import Type
-    import Parser
     import Pretty
 
 -- Types

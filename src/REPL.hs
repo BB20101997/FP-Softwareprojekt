@@ -1,7 +1,6 @@
 module REPL where
     --Read Eval Print Loop
     import Parser
-    import Pretty
     import System.IO
     import Strategy
     import Substitution

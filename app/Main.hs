@@ -1,8 +1,6 @@
 module Main where
     import Type
-    import Strategy
     import REPL
-
 
     main :: IO ()
     main = do

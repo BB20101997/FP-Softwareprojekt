@@ -2,7 +2,6 @@ module SLD where
     import Data.Bifunctor
     import Data.Char
     import Data.Maybe
-    import Pretty
     import Lib
     import Substitution
     import Unifikation

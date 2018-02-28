@@ -1,9 +1,6 @@
 module Strategy where
-    import Pretty
     import Lib
-    import SLD
     import Substitution
-    import Debug.Trace
     import Data.Bifunctor
 
     mapFunction::Strategy->(Subst        ,SLDTree) ->[Subst]

@@ -2,7 +2,6 @@ module Unifikation where
     import Lib
     import Substitution
 
-
     {--
         the first term is expected to be the goal
         the second term is expected to be the pattern
