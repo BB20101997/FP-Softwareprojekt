@@ -7,6 +7,7 @@ module REPL where
     import Strategy
     import Substitution
     import SLD
+    import Lib
 
     type State = (Strategy,Prog)
     type Action = State -> String -> IO ()
@@ -17,7 +18,7 @@ module REPL where
 
     --TODO decide if we should set a default else handle undefined strategy where necessary
     initState::State
-    initState = (undefined,Prog [])
+    initState = (dfs,Prog [])
 
     readPrompt :: State -> IO ()
     readPrompt state = do
@@ -90,15 +91,25 @@ module REPL where
 
     printInfo::Action --TODO advanced pretty print would need to have the variable names as part of the state
     printInfo state@(strategy,Prog []) _      = putStrLn "No aviable predicates, please load file" >> readPrompt state
-    printInfo state@(strategy,Prog program) _ = printPredicates (map showPredicates program) >> readPrompt state
+    printInfo state@(strategy,Prog program) _ = printPredicates(mergesortString (nubString (map showPredicates program))) >> readPrompt state
+
 
     printPredicates:: [String] -> IO ()
+<<<<<<< Updated upstream
     printPredicates predicates = putStrLn $ concat predicates
 
     showPredicates:: Rule -> String -- Returns a predicate with number of its arguments, facts are ignored and Rules don't begin with Vars
     showPredicates (factHead :- []) = "" -- Give nothing if it is a fact and not an predicate
     showPredicates (Comb nameOfPredicate listOfArguments :- predicateBody ) = nameOfPredicate++"\\"++
                                                                                show (length listOfArguments)++"\n"
+=======
+    printPredicates predicates = putStr (foldr (++) "" predicates)
+
+
+    showPredicates:: Rule -> String -- Returns a predicate with number of its arguments, facts are ignored and Rules don't begin with Vars
+    showPredicates (Comb nameOfPredicate listOfArguments :- predicateBody ) = nameOfPredicate++"/"++
+                                                                               (show (length listOfArguments))++"\n"
+>>>>>>> Stashed changes
     showPredicates (Var _ :- _) = "" -- Impossible in prolog syntax
 
     printHelp::Action
