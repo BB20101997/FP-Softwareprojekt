@@ -1,0 +1,2 @@
+boolean(true).
+boolean(false).
