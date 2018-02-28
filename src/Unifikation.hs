@@ -4,11 +4,15 @@ module Unifikation where
     import Substitution
 
 
-
+    {--
+        the first term is expected to be the goal
+        the second term is expected to be the pattern
+    -}
     ds::Term -> Term -> Maybe (Term, Term)
     ds t1              t2              | t1==t2                     = Nothing       --already equal nothing to substitute
-    ds t1              t2@(Var _)                                   = Just (t2,t1)  --t2 is var can be substituted by t1
-    ds t1@(Var _)      t2                                           = Just (t1,t2)  --t1 is var can be substituted by t2
+    ds t1@(Var _)      t2@(Var _)                                   = Just (t1,t2)  --replace goal by pattern
+    ds t1@(Var _)      t2@(Comb _ _)                                = Just (t1,t2)  --t1 is var can be substituted by t2
+    ds t1@(Comb _ _)   t2@(Var _)                                   = Just (t2,t1)  --t2 is var can be substituted by t1
     ds t1@(Comb s1 x1) t2@(Comb s2 x2) | s1/=s2                     = Just (t1,t2)  --s1 and s2 don't1 match all has to be substituted
                                        | (length x1) /= (length x2) = Just (t1,t2)  --unequal argument length all has to be substituted
                                        | otherwise                  = sub_ds x1 x2  --searching for first substitution of the parameters
