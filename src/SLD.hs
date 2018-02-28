@@ -6,9 +6,6 @@ module SLD where
     import Substitution
     import Unifikation
 
-    unpack::SLDTree->[(Subst,SLDTree)]
-    unpack (SLDTree pack) = pack
-
     predefinedRulesMap::[(String,BuildInRule)]
     predefinedRulesMap = [("call",callSubstitution),("is",evalSubstitution),("not",notSubstitution),("\\+",notSubstitution)]
 
