@@ -10,16 +10,16 @@ module Strategy where
 
     mapFunction::Strategy->(Subst        ,SLDTree) ->[Subst]
     mapFunction _          (substitution ,Success) = [substitution]
-    mapFunction stratagy    input                  = uncurry map $ bimap (flip compose) stratagy input
+    mapFunction strategy    input                  = uncurry map $ bimap (flip compose) strategy input
 
-    dfs::Strategy --TODO make it work
+    dfs::Strategy
     dfs (SLDTree resolutions) = concatMap (mapFunction dfs) resolutions
     dfs Success = [empty]
 
     bfs::Strategy
-{-
-    bfs (SLDTree resolutions) = mapFunction bfs resolutions
-
--}
-    bfs _ = []
+    bfs (SLDTree resolutions) = bfsConcat $ map (mapFunction bfs) resolutions
+        where
+            bfsConcat::[[a]]->[a]
+            bfsConcat [] = []
+            bfsConcat listOfLists@(_:_) = [head | (head : _) <- listOfLists] ++ bfsConcat [tail | (_:tail) <- listOfLists]
 
