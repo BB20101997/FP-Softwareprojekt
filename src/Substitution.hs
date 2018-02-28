@@ -7,6 +7,16 @@ module Substitution where
     instance (Show Subst) where
        show = pretty
 
+    instance (Pretty Subst) where
+        prettyWithVars v (Subst []) = "{}"
+        prettyWithVars v (Subst (head:tail)) = "{"
+                                        ++ substTupToString v head
+                                        ++ [ x |tuple<-tail,x <- ","++ substTupToString v tuple ]
+                                        ++ "}"
+
+    substTupToString::[(VarIndex,String)]->(VarIndex, Term)->String
+    substTupToString v (index, term) = prettyWithVars v (Var index)++" -> "++ prettyWithVars v term
+
     empty::Subst
     empty = Subst []
 
@@ -43,12 +53,3 @@ module Substitution where
     compose a          (Subst []) = a
     compose (Subst a)  (Subst b)  = Subst (b++a)
 
-    substTupToString::[(VarIndex,String)]->(VarIndex, Term)->String
-    substTupToString v (index, term) = prettyWithVars v (Var index)++" -> "++ prettyWithVars v term
-
-    instance (Pretty Subst) where
-        prettyWithVars v (Subst []) = "{}"
-        prettyWithVars v (Subst (head:tail)) = "{"
-                                        ++ substTupToString v head
-                                        ++ [ x |tuple<-tail,x <- ","++ substTupToString v tuple ]
-                                        ++ "}"
