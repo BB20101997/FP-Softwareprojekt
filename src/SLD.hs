@@ -17,26 +17,33 @@ module SLD where
     unpack::SLDTree->[(Subst,SLDTree)]
     unpack (SLDTree pack) = pack
 
+    call::Rule
+    call = Comb "call" [] :- []
+
     {-
         For a given Program and Goal produces the corresponding SLDTree based on FIRST Selection-strategy
     -}
     sld::Prog->Goal->SLDTree
-    sld program@(Prog rules) goal = SLDTree $ catMaybes [substitute program rule goal | rule <- rules]
+    sld program@(Prog rules) goal = SLDTree $ catMaybes [substitute program rule goal | rule <- call:rules]
         where
             substitute::Prog->Rule->Goal->Maybe (Subst,SLDTree)
-            substitute _    _    (Goal [])   = Just (empty,Success)
-            substitute prog rule goal        = let
-                                                (Goal (term:rest)) = goal
-                                                (pat :- cond)      = rule >< goal
-                                                unifier            = unify term pat
-                                               in case unifier of
-                                                    Nothing     -> Nothing
-                                                    Just subst  ->  let
-                                                                        newGoal = subst->>(cond++rest)
-                                                                        subTree = sld prog newGoal
-                                                                    in case newGoal of
-                                                                            Goal [] -> Just (subst,Success)
-                                                                            _       -> Just (subst,subTree)
+            substitute _    _    (Goal [])               = Just (empty,Success)
+            substitute prog (Comb "call"  _ :- _) goal       = callSubstitution prog goal  --higher Order Predicates
+            substitute prog rule goal@(Goal (term:rest)) =  let
+                                                                (pat :- cond)      = rule >< goal
+                                                                unifier            = unify term pat
+                                                            in case unifier of
+                                                                Nothing     -> Nothing
+                                                                Just subst  ->  let
+                                                                                    newGoal = subst->>(cond++rest)
+                                                                                    subTree = sld prog newGoal
+                                                                                in case newGoal of
+                                                                                    Goal [] -> Just (subst,Success)
+                                                                                    _       -> Just (subst,subTree)
+
+            callSubstitution::Prog->Goal->Maybe (Subst,SLDTree)
+            callSubstitution prog (Goal (term@(Comb "call" (Comb a args:restArgs)):restGoal)) = Just (Subst[],sld prog (Goal (Comb a (args++restArgs):restGoal)))
+            callSubstitution _    _                                  = Nothing
 
     {-
         given a Rule and a Goal will replace all Variables in then rule that are also in then Goal by new ones
