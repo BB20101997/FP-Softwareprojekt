@@ -89,7 +89,17 @@ module REPL where
     exit _ _ = putStrLn "Goodbye"
 
     printInfo::Action --TODO advanced pretty print would need to have the variable names as part of the state
-    printInfo state _ = putStrLn "No aviable predicates, please load file"
+    printInfo state@(strategy,Prog []) _      = putStrLn "No aviable predicates, please load file" >> readPrompt state
+    printInfo state@(strategy,Prog program) _ = printPredicates (map showPredicates program) >> readPrompt state
+
+    printPredicates:: [String] -> IO ()
+    printPredicates predicates = putStrLn (foldr (++) "" predicates)
+
+    showPredicates:: Rule -> String -- Returns a predicate with number of its arguments, facts are ignored and Rules don't begin with Vars
+    showPredicates (factHead :- []) = "" -- Give nothing if it is a fact and not an predicate
+    showPredicates (Comb nameOfPredicate listOfArguments :- predicateBody ) = nameOfPredicate++"\\"++
+                                                                               (show (length listOfArguments))++"\n"
+    showPredicates (Var _ :- _) = "" -- Impossible in prolog syntax
 
     printHelp::Action
     printHelp state _ = putStrLn helpText >> readPrompt state
