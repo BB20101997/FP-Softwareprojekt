@@ -6,6 +6,7 @@ module SLD where
     import Unifikation
     import Pretty
     import Data.Bifunctor
+    import Data.Char
 
     data SLDTree = SLDTree [(Subst, SLDTree)] |  Success
                 deriving Show
@@ -53,8 +54,10 @@ module SLD where
     callSubstitution _    _                                  = Nothing
 
     evalSubstitution::Prog->Goal->Maybe (Subst,SLDTree)
-    evalSubstitution prog (Goal (Comb "is" [Var i,term]:rest)) |  Just (Left a)  <- eval term = Just (single i (Comb (show a) []),sld prog (Goal rest))
-                                                               |  Just (Right a) <- eval term = Just (single i (Comb (show a) []),sld prog (Goal rest))
+    evalSubstitution prog (Goal [Comb "is" [Var i, term]])     |  Just (Left  a) <- eval term = Just (single i (Comb (              show a) []), Success)
+                                                               |  Just (Right a) <- eval term = Just (single i (Comb (map toLower $ show a) []), Success)
+    evalSubstitution prog (Goal (Comb "is" [Var i,term]:rest)) |  Just (Left  a) <- eval term = Just (single i (Comb (              show a) []), sld prog (Goal rest))
+                                                               |  Just (Right a) <- eval term = Just (single i (Comb (map toLower $ show a) []), sld prog (Goal rest))
     evalSubstitution _    _                                                                   = Nothing
 
     {-
