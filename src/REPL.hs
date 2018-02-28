@@ -95,21 +95,18 @@ module REPL where
 
 
     printPredicates:: [String] -> IO ()
-<<<<<<< Updated upstream
     printPredicates predicates = putStrLn $ concat predicates
 
     showPredicates:: Rule -> String -- Returns a predicate with number of its arguments, facts are ignored and Rules don't begin with Vars
     showPredicates (factHead :- []) = "" -- Give nothing if it is a fact and not an predicate
     showPredicates (Comb nameOfPredicate listOfArguments :- predicateBody ) = nameOfPredicate++"\\"++
                                                                                show (length listOfArguments)++"\n"
-=======
     printPredicates predicates = putStr (foldr (++) "" predicates)
 
 
     showPredicates:: Rule -> String -- Returns a predicate with number of its arguments, facts are ignored and Rules don't begin with Vars
     showPredicates (Comb nameOfPredicate listOfArguments :- predicateBody ) = nameOfPredicate++"/"++
                                                                                (show (length listOfArguments))++"\n"
->>>>>>> Stashed changes
     showPredicates (Var _ :- _) = "" -- Impossible in prolog syntax
 
     printHelp::Action
