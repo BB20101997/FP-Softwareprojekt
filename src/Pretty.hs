@@ -18,8 +18,8 @@ module Pretty where
         prettyWithVars v (Comb "." [x])        = "[ " ++ prettyWithVars v x ++ " ]"
         prettyWithVars v (Comb "." (x:xs))     = "[ " ++ prettyWithVars v x ++ ", " ++ prettyWithVars v xs ++ " ]"
         prettyWithVars v (Comb y [])           = y
-        prettyWithVars v (Comb y [x])          = y ++ "( " ++ pretty x ++ " )"
-        prettyWithVars v (Comb y (x:xs))       = y ++ "( " ++ pretty x ++ ", " ++ pretty xs ++ " )"
+        prettyWithVars v (Comb y [x])          = y ++ "( " ++ prettyWithVars v x ++ " )"
+        prettyWithVars v (Comb y (x:xs))       = y ++ "( " ++ prettyWithVars v x ++ ", " ++ prettyWithVars v xs ++ " )"
 
     instance (Pretty b) => (Pretty [b] ) where
         prettyWithVars v []      = ""
