@@ -9,9 +9,6 @@ module REPL where
     import Substitution
     import System.IO
 
-    {-
-        Todo 3. Antwortsubstitution
-    -}
     -- / The state at the start of the Interface
     initState :: State
     initState = (dfs, Prog [])
