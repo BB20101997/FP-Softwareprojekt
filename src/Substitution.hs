@@ -1,4 +1,5 @@
 module Substitution where
+    import Data.Bifunctor
     import Lib
 
     empty :: Subst
@@ -8,9 +9,9 @@ module Substitution where
     single index term = Subst [(index, term)]
 
     apply :: Subst -> Term -> Term
-    apply (Subst [(index, term)]) orig@(Var vIndex) | index == vIndex  = term
-                                                    | otherwise        = orig
-    apply (Subst subst)           orig@(Var _)   = foldl (\var term -> apply (Subst [term]) var) orig subst
+    apply (Subst []) orig = orig
+    apply (Subst ((index, term):rest)) orig@(Var vIndex) | index == vIndex  = term
+                                                         | otherwise        = apply (Subst rest) orig
     apply subst                   (Comb s term)  = Comb s (map (apply subst) term)
 
     {-
@@ -22,12 +23,4 @@ module Substitution where
     compose :: Subst -> Subst -> Subst
     compose (Subst []) a          = a
     compose a          (Subst []) = a
-    compose (Subst a)  (Subst b)  = Subst (b++a)
-        where
-            --TODO This still has none working edge cases that need to be fixed
-            --The boolean determines if the substitution should be inserted at the end
-            combine :: Bool -> [(VarIndex, Term)] -> (VarIndex,Term) -> [(VarIndex, Term)]
-            combine True  []                  ins             = [ins]
-            combine False []                  ins             = []
-            combine end   ((index, term):tail) ins@(vIndex,_) = (index, apply (Subst [ins]) term)
-                                                                 : combine (end&&(index /= vIndex))  tail ins
+    compose (Subst a)  (Subst b)  = Subst $ map (second (apply $ Subst a)) b ++ [add | add@(index, _) <- a,index `notElem` [i | (i,_) <- b]]
