@@ -22,7 +22,7 @@ module Substitution where
     compose::Subst->Subst->Subst
     compose (Subst []) a          = a
     compose a          (Subst []) = a
-    compose (Subst a)  (Subst b)  = Subst $ foldl (combine True) b a
+    compose (Subst a)  (Subst b)  = Subst (b++a)
         where
             --The boolean determines if the substitution should be inserted at the end
             combine::Bool->[(VarIndex,Term)]->(VarIndex,Term)->[(VarIndex,Term)]
