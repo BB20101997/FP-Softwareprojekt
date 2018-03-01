@@ -60,10 +60,13 @@ module SLD(sld) where
     notSubstitution _      _        _    _  =  Nothing
 
     findAllSubstitution :: BuildInRule
-    findAllSubstitution strategy prog (Goal (Comb "findall" [template, called, Var index]:rest)) = let
+    findAllSubstitution strategy prog (Goal (Comb "findall" [template, called, Var index]:rest)) =  let
                                                                                                         results = strategy $ sld strategy prog (Goal [called])
+                                                                                                        subTree = sld strategy prog (Goal rest)
+                                                                                                        --TODO for each template instance replace the free variables with new unused ones
+                                                                                                        bag = hListToPList (map (`apply` template) results)
                                                                                                     in
-                                                                                                        Just (Subst [(index, hListToPList (map (`apply` template) results))], sld strategy prog (Goal rest))
+                                                                                                        Just (Subst [(index,bag)], subTree)
     findAllSubstitution _        _     _                                                            = Nothing
 
     {-
