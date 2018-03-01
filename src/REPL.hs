@@ -23,16 +23,20 @@ module REPL where
                             hFlush stdout --make sure user knows we are waiting for him
                             getLine >>= \input -> interpretPrompt state input
 
+    menuEntries::[(String,Action)]
+    menuEntries =   [(":help",printHelp)
+                    ,(":quit",exit)
+                    ,(":info",printInfo)
+                    ,(":set",setSearch)
+                    ,(":load",loadFile)
+                    ]
+
     -- / Interprets the input from the user of the interface
     interpretPrompt :: Action
     interpretPrompt state@(strategy, program) input
-                    | ""                       == input  = readPrompt state -- ignore empty input and ask again
-                    | ":help"                  == input  = printHelp state input
-                    | ":quit"                  == input  = exit      state input
-                    | ":info"                  == input  = printInfo state input
-                    | ":set " ++ drop 5 input  == input  = setSearch state (drop 5 input)
-                    | ":load " ++ drop 6 input == input  = loadFile  state (drop 6 input)
-                    | otherwise                          = parseGoalAndEvalGoal state input
+                    | "" == input                                            = readPrompt state -- ignore empty input and ask again
+                    | Just action <- lookup (head $ words input) menuEntries = action state $ unwords $ tail $ words input
+                    | otherwise                                              = parseGoalAndEvalGoal state input
 
     -- / If the input was an prolog expression it prints the evaluation of the goal
     -- Otherwise it prints an error message
@@ -43,9 +47,6 @@ module REPL where
                                                    sldTree   = sld strategy program goal
                                                    solutions = strategy sldTree
                                                in do
-                                                   --print sldTree
-                                                   --print $ pretty sldTree
-                                                   --print $ prettyWithVars vars sldTree
                                                    outputSolutions vars solutions
                                                    readPrompt state
 
