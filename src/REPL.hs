@@ -12,21 +12,18 @@ module REPL where
     {-
         Todo 3. Antwortsubstitution
     -}
-
+    -- / The state at the start of the Interface
     initState :: State
     initState = (dfs, Prog [])
 
+    -- / Asks the user for an input for the prolog-interface
     readPrompt :: State -> IO ()
     readPrompt state = do
                             putStr "?- "
                             hFlush stdout --make sure user knows we are waiting for him
                             getLine >>= \input -> interpretPrompt state input
 
-    fileReadingResult :: State -> Either String Prog -> IO State
-    fileReadingResult state                  (Left error)
-                      = putStrLn ("Couldn't read file, the following error occurred: "++error) >> return state
-    fileReadingResult (strategy, oldProgram) (Right prog) = putStrLn "File read "              >> return (strategy, prog)
-
+    -- / Interprets the input from the user of the interface
     interpretPrompt :: Action
     interpretPrompt state@(strategy, program) input
                     | ""                       == input  = readPrompt state -- ignore empty input and ask again
@@ -37,6 +34,8 @@ module REPL where
                     | ":load " ++ drop 6 input == input  = loadFile  state (drop 6 input)
                     | otherwise                          = parseGoalAndEvalGoal state input
 
+    -- / If the input was an prolog expression it prints the evaluation of the goal
+    -- Otherwise it prints an error message
     parseGoalAndEvalGoal :: Action
     parseGoalAndEvalGoal state@(strategy, program) input = case parseWithVars input of
                          Left error -> putStrLn error >> readPrompt state
@@ -50,12 +49,14 @@ module REPL where
                                                    outputSolutions vars solutions
                                                    readPrompt state
 
+    -- / Prints one solution of a goal
     outputSolutions :: [(VarIndex, String)] -> [Subst] -> IO()
     outputSolutions _    []          = putStrLn "No further Solutions!"
     outputSolutions vars (head:rest) = do
                                         putStr $ prettyWithVars vars head
                                         promptFurtherSolutions  vars rest
 
+    -- / Asks the user if more solutions should be displayed
     promptFurtherSolutions :: [(VarIndex, String)] -> [Subst] -> IO()
     promptFurtherSolutions vars rest = do
                                         hFlush stdout --make sure user knows we are waiting for him
@@ -69,12 +70,14 @@ module REPL where
                                                     putStr "', valid are ',' and '.'!"
                                                     promptFurtherSolutions vars rest
 
+    -- / Sets the search strategy the program should use on sld trees either 'dfs' or 'bfs' are correct inputs
     setSearch :: Action
     setSearch (oldStrategy, program) newStrategy
               | newStrategy == "dfs" = putStrLn "Strategy set to depth-first"    >> readPrompt (dfs, program)
               | newStrategy == "bfs" = putStrLn "Strategy set to breadth-first"  >> readPrompt (bfs, program)
               | otherwise            = putStrLn "Error strategy stays unchanged" >> readPrompt (oldStrategy, program)
 
+    -- / Loads a prolog file
     loadFile :: Action
     loadFile state filePath = do
                                 putStrLn ("Loading file " ++ filePath)
@@ -82,26 +85,36 @@ module REPL where
                                 newState <- fileReadingResult state parseResult
                                 readPrompt newState
 
+    -- / Prints the result of the prolog file loading, if an error occurred the old program is used
+    fileReadingResult :: State -> Either String Prog -> IO State
+    fileReadingResult state                  (Left error)
+                      = putStrLn ("Couldn't read file, the following error occurred: " ++ error) >> return state
+    fileReadingResult (strategy, oldProgram) (Right prog) = putStrLn "File read "                >> return (strategy, prog)
+
+    -- / Closes the prolog interface
     exit :: Action
     exit _ _ = putStrLn "Goodbye"
 
+    -- / Shows if a program is currently loaded, if it is it shows the aviable predicates
     printInfo :: Action
     printInfo state@(strategy,Prog [])      _ = putStrLn "No aviable predicates, please load file" >> readPrompt state
     printInfo state@(strategy,Prog program) _ = printPredicates(sort (nub (map showPredicates program))) >> readPrompt state
 
-
+    -- / Prints the predicates of a program
     printPredicates :: [String] -> IO ()
     printPredicates predicates = putStr (foldr (++) "" predicates)
 
-
-    showPredicates :: Rule -> String -- Returns a predicate with number of its arguments, Rules don't begin with Vars
+    -- / Returns a predicate with number of its arguments
+    showPredicates :: Rule -> String
     showPredicates (Comb nameOfPredicate listOfArguments :- predicateBody ) = nameOfPredicate ++ "/" ++
                                                                                (show (length listOfArguments)) ++ "\n"
     showPredicates (Var _ :- _) = "" -- Impossible in prolog syntax
 
+    -- / Shows the commands that can be used in the prolog interface
     printHelp :: Action
     printHelp state _ = putStrLn helpText >> readPrompt state
 
+    -- / The Text with the aviable commands of the prolog interface
     helpText :: String
     helpText =  "Commands available from the prompt: \n" ++
                 " <goal> Solves/proves the specified goal. \n" ++
