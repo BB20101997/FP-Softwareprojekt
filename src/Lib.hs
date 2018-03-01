@@ -27,10 +27,9 @@ module Lib(module Lib,module Type,module Pretty) where
        show = pretty
 
     instance (Pretty Subst) where
-        prettyWithVars v (Subst [])          = "{}"
-        prettyWithVars v (Subst (head:tail)) = "{"
-                                        ++ substTupToString v head
-                                        ++ [ x|tuple<-tail,x <- ","++ substTupToString v tuple]
+        prettyWithVars v (Subst []) = "{}"
+        prettyWithVars v (Subst l)  = "{"
+                                        ++ notHeadList v l
                                         ++ "}"
 
     instance Pretty SLDTree where
@@ -43,6 +42,15 @@ module Lib(module Lib,module Type,module Pretty) where
         (==) _ _ = False
 
 --other stuff
+    notHeadList ::  [(VarIndex, String)] -> [(VarIndex, Term)] -> String
+    notHeadList v []          = ""
+    notHeadList v (head:tail) = case (take 1 (substTupToString v head)) of
+                                     "_" ->  notHeadList v tail
+                                     otherwise -> substTupToString v head ++ [ x|tuple<-tail,x <- (", "++ substTupToString v tuple), notSuppress v tuple]
+
+    notSuppress :: [(VarIndex, String)] -> (VarIndex, Term) -> Bool
+    notSuppress v (head) = (take 1 (substTupToString v head)) /= "_"
+
     substTupToString :: [(VarIndex, String)] -> (VarIndex, Term) -> String
     substTupToString v        (index, term) = prettyWithVars v (Var index) ++ " -> " ++ prettyWithVars v term
 
