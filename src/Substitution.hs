@@ -24,6 +24,7 @@ module Substitution where
     compose a          (Subst []) = a
     compose (Subst a)  (Subst b)  = Subst (b++a)
         where
+            --TODO This still has none working edge cases that need to be fixed
             --The boolean determines if the substitution should be inserted at the end
             combine::Bool->[(VarIndex,Term)]->(VarIndex,Term)->[(VarIndex,Term)]
             combine True  []                  ins            = [ins]
