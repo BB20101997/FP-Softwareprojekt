@@ -3,7 +3,7 @@ module Pretty where
 
     import Type
 
-    -- / If no Variable names are specified it uses these as default, used in pretty
+    -- / If no Variable names are specified pretty uses these as default
     defaultVarNames :: [(VarIndex, String)]
     defaultVarNames = [(i, 'A':show i)|i<-[0..]]
 
