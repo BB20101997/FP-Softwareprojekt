@@ -6,6 +6,7 @@ module REPL where
     import Substitution
     import SLD
     import Lib
+    import Data.List
 
     {-
         Todo 3. Antwortsubstitution
@@ -84,7 +85,7 @@ module REPL where
 
     printInfo::Action
     printInfo state@(strategy,Prog []) _      = putStrLn "No aviable predicates, please load file" >> readPrompt state
-    printInfo state@(strategy,Prog program) _ = printPredicates(mergesortString (nubString (map showPredicates program))) >> readPrompt state
+    printInfo state@(strategy,Prog program) _ = printPredicates(sort (nub (map showPredicates program))) >> readPrompt state
 
 
     printPredicates:: [String] -> IO ()
