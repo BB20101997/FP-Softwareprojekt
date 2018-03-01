@@ -11,6 +11,7 @@ module SLD(sld) where
                          , ("is", evalSubstitution)
                          , ("not", notSubstitution "not")
                          , ("\\+", notSubstitution "\\+")
+                         , ("findall", findAllSubstitution)
                          ]
 
     predefinedRules :: [Rule]
@@ -30,9 +31,8 @@ module SLD(sld) where
     baseSubstitution :: Rule -> BuildInRule
     baseSubstitution _    _        _    (Goal [])               = Nothing --this should never happen
     baseSubstitution rule strategy prog goal@(Goal (term:rest)) =   let
-                                                                        (pat :- cond)      = rule >< goal
-                                                                        unifier            = unify term pat
-                                                                    in case unifier of
+                                                                        (pat :- cond) = rule >< goal
+                                                                    in case unify term pat of
                                                                         Nothing     -> Nothing
                                                                         Just subst  ->  let
                                                                                             newGoal = subst ->> (cond ++ rest)
@@ -58,6 +58,20 @@ module SLD(sld) where
                                          [] -> Just (empty, sld strategy prog (Goal rest))
                                          _  -> Nothing
     notSubstitution _      _        _    _  =  Nothing
+
+    findAllSubstitution :: BuildInRule
+    findAllSubstitution strategy prog (Goal (Comb "findall" [template, called, Var index]:rest)) = let
+                                                                                                        results = strategy $ sld strategy prog (Goal [called])
+                                                                                                    in
+                                                                                                        Just (Subst [(index, hListToPList (map (`apply` template) results))], sld strategy prog (Goal rest))
+    findAllSubstitution _        _     _                                                            = Nothing
+
+    {-
+        Converts a haskell list of Terms to a Prolog List of Terms
+    -}
+    hListToPList::[Term]->Term
+    hListToPList []          = Comb "[]" []
+    hListToPList (head:tail) = Comb "." [head,hListToPList tail]
 
     {-
         given a Rule and a Goal will replace all Variables in then rule that are also in then Goal by new ones
