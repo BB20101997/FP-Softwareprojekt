@@ -46,29 +46,31 @@ module REPL where
                                                    --print sldTree
                                                    --print $ pretty sldTree
                                                    --print $ prettyWithVars vars sldTree
-                                                   outputSolutions vars solutions
+                                                   outputSolutions vars solutions []
                                                    readPrompt state
 
     -- / Prints one solution of a goal
-    outputSolutions :: [(VarIndex, String)] -> [Subst] -> IO()
-    outputSolutions _    []          = putStrLn "No further Solutions!"
-    outputSolutions vars (head:rest) = do
-                                        putStr $ prettyWithVars vars head
-                                        promptFurtherSolutions  vars rest
+    outputSolutions :: [(VarIndex, String)] -> [Subst] -> [String] -> IO()
+    outputSolutions _    []          old= putStrLn "No further Solutions!"
+    outputSolutions vars (head:rest) old= if (elem (prettyWithVars vars head) old)
+                                              then outputSolutions vars rest old
+                                              else do
+                                                     putStr $ prettyWithVars vars head
+                                                     promptFurtherSolutions  vars rest ((prettyWithVars vars head):old)
 
     -- / Asks the user if more solutions should be displayed
-    promptFurtherSolutions :: [(VarIndex, String)] -> [Subst] -> IO()
-    promptFurtherSolutions vars rest = do
+    promptFurtherSolutions :: [(VarIndex, String)] -> [Subst] -> [String] -> IO()
+    promptFurtherSolutions vars rest old = do
                                         hFlush stdout --make sure user knows we are waiting for him
                                         x <- getLine
                                         case x of
-                                            "," -> outputSolutions vars rest    --next result
+                                            "," -> outputSolutions vars rest old   --next result
                                             "." -> return ()                    --don't print further results
                                             _   -> do                           --invalid response, retry
                                                     putStr "Invalid Command '"
                                                     putStr x
                                                     putStr "', valid are ',' and '.'!"
-                                                    promptFurtherSolutions vars rest
+                                                    promptFurtherSolutions vars rest old
 
     -- / Sets the search strategy the program should use on sld trees either 'dfs' or 'bfs' are correct inputs
     setSearch :: Action
