@@ -4,16 +4,16 @@ module Pretty where
 
     import Type
 
-    -- / If no Variable names are specified pretty uses these as default
+    -- |If no Variable names are specified pretty uses these as default
     defaultVarNames :: [(VarIndex, String)]
     defaultVarNames = [(i, 'A':show i)|i<-[0..]]
 
     class Pretty a where
-        -- / Converts a type into a String with generic Variable names
+        -- |Converts a type into a String with generic Variable names
         pretty :: a -> String
         pretty = prettyWithVars defaultVarNames
 
-        -- / Converts a type into a String with specified Variable names
+        -- |Converts a type into a String with specified Variable names
         prettyWithVars :: [(VarIndex, String)] -> a -> String
         prettyWithVars _ = pretty
 

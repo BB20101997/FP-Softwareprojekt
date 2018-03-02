@@ -1,5 +1,5 @@
 module REPL where
-    --Read Eval Print Loop
+    -- |Read Eval Print Loop
     import Data.List
     import System.IO
 
@@ -9,15 +9,16 @@ module REPL where
     import Strategy
     import Substitution
 
-    -- / The state at the start of the Interface
+    -- |The state at the start of the Interface
     initState :: State
     initState = (dfs, Prog [])
 
-    -- / Asks the user for an input for the prolog-interface
+    -- |Asks the user for an input for the prolog-interface
     readPrompt :: State -> IO ()
     readPrompt state = do
                             putStr "?- "
-                            hFlush stdout --make sure user knows we are waiting for him
+                            -- |make sure user knows we are waiting for him
+                            hFlush stdout
                             getLine >>= \input -> interpretPrompt state input
 
     menuEntries::[(String,Action)]
@@ -28,57 +29,82 @@ module REPL where
                     ,(":load",loadFile)
                     ]
 
-    -- / Interprets the input from the user of the interface
+    -- |Interprets the input from the user of the interface
     interpretPrompt :: Action
     interpretPrompt state@(strategy, program) input
-                    | "" == input                                            = readPrompt state -- ignore empty input and ask again
-                    | Just action <- lookup (head $ words input) menuEntries = action state $ unwords $ tail $ words input
-                    | otherwise                                              = parseGoalAndEvalGoal state input
+                    -- |ignore empty input and ask again
+                    | "" == input
+                    = readPrompt state
+                    | Just action <- lookup (head $ words input) menuEntries
+                    = action state $ unwords $ tail $ words input
+                    | otherwise
+                    = parseGoalAndEvalGoal state input
 
-    -- / If the input was an prolog expression it prints the evaluation of the goal
-    -- Otherwise it prints an error message
+    {-|
+        If the input was an prolog expression
+            then
+                it evaluates the goal and prints the result
+            else
+                it prints an error message
+    -}
     parseGoalAndEvalGoal :: Action
-    parseGoalAndEvalGoal state@(strategy, program) input = case parseWithVars input of
-                         Left error -> putStrLn error >> readPrompt state
-                         Right (goal, vars) -> let
-                                                   sldTree   = sld strategy program goal
-                                                   solutions = strategy sldTree
-                                               in do
-                                                   outputSolutions vars solutions
-                                                   readPrompt state
+    parseGoalAndEvalGoal state@(strategy, program) input
+        = case parseWithVars input of
+            Left error -> putStrLn error >> readPrompt state
+            Right (goal, vars) ->
+                let
+                    sldTree   = sld strategy program goal
+                    solutions = strategy sldTree
+                in do
+                    outputSolutions vars solutions
+                    readPrompt state
 
-    -- / Prints one solution of a goal
+    -- |Prints one solution of a goal
     outputSolutions :: [(VarIndex, String)] -> [Subst] -> IO()
-    outputSolutions _    []          = putStrLn "No further Solutions!"
-    outputSolutions vars (head:rest) = do
-                                        putStr $ prettyWithVars vars $ filterOutput vars head
-                                        promptFurtherSolutions  vars rest
+    outputSolutions _    []
+        = putStrLn "No further Solutions!"
+    outputSolutions vars (head:rest)
+        = do
+            putStr $ prettyWithVars vars $ filterOutput vars head
+            promptFurtherSolutions  vars rest
 
     filterOutput :: [(VarIndex,String)] -> Subst -> Subst
-    filterOutput vars (Subst sub) = Subst [s |s@(index,_)<-sub,index `elem` [v | (v,name) <- vars,name/="_"]]
+    filterOutput vars (Subst sub)
+        = Subst [s | s@(index,_)<-sub,index `elem` [v | (v,name) <- vars,name/="_"]]
 
-    -- / Asks the user if more solutions should be displayed
+    -- |Asks the user if more solutions should be displayed
     promptFurtherSolutions :: [(VarIndex, String)] -> [Subst] -> IO()
-    promptFurtherSolutions vars rest = do
-                                        hFlush stdout --make sure user knows we are waiting for him
-                                        x <- getLine
-                                        case x of
-                                            "," -> outputSolutions vars rest--next result
-                                            "." -> return ()                    --don't print further results
-                                            _   -> do                           --invalid response, retry
-                                                    putStr "Invalid Command '"
-                                                    putStr x
-                                                    putStr "', valid are ',' and '.'!"
-                                                    promptFurtherSolutions vars rest
+    promptFurtherSolutions vars rest
+        = do
+            -- |make sure user knows we are waiting for him
+            hFlush stdout
+            x <- getLine
+            case x of
+                -- |next result
+                "," -> outputSolutions vars rest
+                -- |don't print further results
+                "." -> return ()
+                -- |invalid response, retry
+                _   -> do
+                        putStr "Invalid Command '"
+                        putStr x
+                        putStr "', valid are ',' and '.'!"
+                        promptFurtherSolutions vars rest
 
-    -- / Sets the search strategy the program should use on sld trees either 'dfs' or 'bfs' are correct inputs
+    {-|
+        Sets a new Search Strategy
+        If the input is neither dfs nor bfs the current strategy will persist
+    -}
     setSearch :: Action
-    setSearch (oldStrategy, program) newStrategy
-              | newStrategy == "dfs" = putStrLn "Strategy set to depth-first"    >> readPrompt (dfs, program)
-              | newStrategy == "bfs" = putStrLn "Strategy set to breadth-first"  >> readPrompt (bfs, program)
-              | otherwise            = putStrLn "Error strategy stays unchanged" >> readPrompt (oldStrategy, program)
+    setSearch (old, program) newStrategy
+        | newStrategy == "dfs"
+        = putStrLn "Strategy set to depth-first"    >> readPrompt (dfs, program)
+        | newStrategy == "bfs"
+        = putStrLn "Strategy set to breadth-first"  >> readPrompt (bfs, program)
+        | otherwise
+        = putStrLn "Error strategy stays unchanged" >> readPrompt (old, program)
 
-    -- / Loads a prolog file
+    -- |Loads a prolog file
     loadFile :: Action
     loadFile state filePath = do
                                 putStrLn ("Loading file " ++ filePath)
@@ -86,38 +112,40 @@ module REPL where
                                 newState <- fileReadingResult state parseResult
                                 readPrompt newState
 
-    -- / Prints the result of the prolog file loading, if an error occurred the old program is used
+    -- |Prints the result of the prolog file loading, if an error occurred the old program is used
     fileReadingResult :: State -> Either String Prog -> IO State
     fileReadingResult state                  (Left error)
-                      = putStrLn ("Couldn't read file, the following error occurred: " ++ error) >> return state
-    fileReadingResult (strategy, oldProgram) (Right prog) = putStrLn "File read "                >> return (strategy, prog)
+        = putStrLn ("Couldn't read file, the following error occurred: " ++ error) >> return state
+    fileReadingResult (strategy, oldProgram) (Right prog)
+        = putStrLn "File read " >> return (strategy, prog)
 
-    -- / Closes the prolog interface
+    -- |Closes the prolog interface
     exit :: Action
     exit _ _ = putStrLn "Goodbye"
 
-    -- / Shows if a program is currently loaded, if it is it shows the aviable predicates
+    -- |Shows if a program is currently loaded, if it is it shows the aviable predicates
     printInfo :: Action
-    printInfo state@(strategy,Prog program) _ =
-        do
+    printInfo state@(strategy,Prog program) _
+        = do
             printPredicates(sort (nub (map showPredicates $ program++SLD.predefinedRules)))
             readPrompt state
 
-    -- / Prints the predicates of a program
+    -- |Prints the predicates of a program
     printPredicates :: [String] -> IO ()
     printPredicates predicates = putStr (concat predicates)
 
-    -- / Returns a predicate with number of its arguments
+    -- |Returns a predicate with number of its arguments
     showPredicates :: Rule -> String
-    showPredicates (Comb nameOfPredicate listOfArguments :- predicateBody ) = nameOfPredicate ++ "/" ++
-                                                                               show (length listOfArguments) ++ "\n"
-    showPredicates (Var _ :- _) = "" -- Impossible in prolog syntax
+    showPredicates (Comb nameOfPredicate listOfArguments :- predicateBody )
+        = nameOfPredicate ++ "/" ++ show (length listOfArguments) ++ "\n"
+    -- |Impossible in prolog syntax
+    showPredicates (Var _ :- _) = ""
 
-    -- / Shows the commands that can be used in the prolog interface
+    -- |Shows the commands that can be used in the prolog interface
     printHelp :: Action
     printHelp state _ = putStrLn helpText >> readPrompt state
 
-    -- / The Text with the aviable commands of the prolog interface
+    -- |The Text with the available commands of the prolog interface
     helpText :: String
     helpText =  "Commands available from the prompt: \n" ++
                 " <goal> Solves/proves the specified goal. \n" ++

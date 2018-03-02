@@ -4,24 +4,24 @@ module Lib(module Lib,module Type,module Pretty) where
     import Type
     import Pretty
 
--- Types
+-- |Types
 
-    --REPL Types
+    -- |REPL Types
     type State = (Strategy,Prog)
     type Action = State -> String -> IO ()
 
-    --Strategy Types
+    -- |Strategy Types
     type Strategy = SLDTree -> [Subst]
 
-    --Substitution Types
+    -- |Substitution Types
     newtype Subst = Subst [(VarIndex, Term)]
 
-    --SLDTree Types
+    -- |SLDTree Types
     type BuildInRule = Strategy -> Prog -> Goal -> Maybe (Subst, SLDTree)
     data SLDTree = SLDTree [(Subst, SLDTree)] |  Success
                 deriving Show
 
--- Instances
+-- |Instances
 
     instance (Show Subst) where
        show = pretty
@@ -42,7 +42,7 @@ module Lib(module Lib,module Type,module Pretty) where
         (==) (Comb s r) (Comb s2 r2) | s == s2 = all (uncurry (==)) (zip r r2)
         (==) _ _ = False
 
---other stuff
+-- |other stuff
     substTupToString :: [(VarIndex, String)] -> (VarIndex, Term) -> String
     substTupToString v        (index, term) = prettyWithVars v (Var index) ++ " -> " ++ prettyWithVars v term
 

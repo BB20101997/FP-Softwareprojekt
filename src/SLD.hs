@@ -17,67 +17,90 @@ module SLD(sld,predefinedRules) where
     predefinedRules :: [Rule]
     predefinedRules = [Comb x [] :- [] | (x, _) <- predefinedRulesMap]
 
-    {-
-        For a given Program and Goal produces the corresponding SLDTree based on FIRST Selection-strategy
+    {-|
+        Using the FIRTS selection strategy given a Program and a Goal
+        this function will produce the corresponding SLDTree
     -}
     sld :: Strategy -> Prog -> Goal -> SLDTree
-    sld _        _                   (Goal []) = Success
-    sld strategy program@(Prog rules) goal     = SLDTree $ catMaybes [substitute rule strategy program goal | rule <- predefinedRules++rules]
-        where
+    sld _        _                   (Goal [])
+        = Success
+    sld strategy program@(Prog rules) goal
+        = SLDTree $ catMaybes   [substitute rule strategy program goal
+                                | rule <- predefinedRules++rules]
+          where
             substitute :: Rule->BuildInRule
-            substitute (Comb a _ :- _) strategy prog goal | Just func <- lookup a predefinedRulesMap = func strategy prog goal
-            substitute  rule           strategy prog goal                                            = baseSubstitution rule strategy prog goal
+            substitute rule@(Comb a _ :- _) strategy prog goal
+                | Just func <- lookup a predefinedRulesMap
+                = func strategy prog goal
+                | otherwise
+                = baseSubstitution rule strategy prog goal
 
     baseSubstitution :: Rule -> BuildInRule
-    baseSubstitution _    _        _    (Goal [])               = Nothing --this should never happen
-    baseSubstitution rule strategy prog goal@(Goal (term:rest)) =   let
-                                                                        (pat :- cond) = rule >< goal
-                                                                    in case unify term pat of
-                                                                        Nothing     -> Nothing
-                                                                        Just subst  ->  let
-                                                                                            newGoal = subst ->> (cond ++ rest)
-                                                                                            subTree = sld strategy prog newGoal
-                                                                                        in Just (subst, subTree)
+    -- |this should never happen
+    baseSubstitution _    _        _    (Goal [])
+        =                       Nothing
+    baseSubstitution rule strategy prog goal@(Goal (term:rest))
+        = let (pat :- cond) = rule >< goal in
+            case unify term pat of
+                Nothing     ->  Nothing
+                Just subst  ->
+                    let
+                        newGoal = subst ->> (cond ++ rest)
+                        subTree = sld strategy prog newGoal
+                    in          Just (subst, subTree)
 
     callSubstitution :: BuildInRule
-    callSubstitution strategy prog (Goal (term@(Comb "call" (Comb a args:restArgs)):restGoal)) = Just (Subst[], sld strategy prog (Goal (Comb a (args ++ restArgs):restGoal)))
-    callSubstitution _        _    _                                                           = Nothing
+    callSubstitution strategy prog (Goal (Comb _ (Comb a args:restArgs):restGoal))
+        = Just  ( Subst[]
+                , sld strategy prog (Goal (Comb a (args ++ restArgs):restGoal))
+                )
+    callSubstitution _        _    _
+        = Nothing
 
     evalSubstitution :: BuildInRule
-    evalSubstitution strategy prog (Goal (Comb "is" [Var i, term]:rest))
-                     |  Just (Left  a) <- eval term
-                      = Just (single i (Comb (              show a) []), sld strategy prog (Goal rest))
-                     |  Just (Right a) <- eval term
-                      = Just (single i (Comb (map toLower $ show a) []), sld strategy prog (Goal rest))
-    evalSubstitution _        _    _                                                                   = Nothing
+    evalSubstitution strategy prog (Goal (Comb _ [Var i, term]:rest))
+                    | Just just <- eval term
+                    =   let
+                            substitution = single i $ case just of
+                                Left  a -> Comb (              show a) []
+                                Right a -> Comb (map toLower $ show a) []
+                            subTree = sld strategy prog (Goal rest)
+                        in  Just (substitution,subTree)
+    evalSubstitution _        _    _
+                    =       Nothing
 
 
     notSubstitution :: String -> BuildInRule
-    notSubstitution opCode strategy prog (Goal (Comb op goal:rest))
-                    | op==opCode =  case strategy $ sld strategy prog (Goal goal) of
-                                         [] -> Just (empty, sld strategy prog (Goal rest))
-                                         _  -> Nothing
-    notSubstitution _      _        _    _  =  Nothing
+    notSubstitution opCode strategy prog (Goal (Comb _ goal:rest))
+        =  case strategy $ sld strategy prog (Goal goal) of
+             [] ->  Just (empty, sld strategy prog (Goal rest))
+             _  ->  Nothing
+    notSubstitution _      _        _    _
+        =           Nothing
 
     findAllSubstitution :: BuildInRule
-    findAllSubstitution strategy prog (Goal (Comb "findall" [template, called, Var index]:rest)) =  let
-                                                                                                        results = strategy $ sld strategy prog (Goal [called])
-                                                                                                        subTree = sld strategy prog (Goal rest)
-                                                                                                        --TODO for each template instance replace the free variables with new unused ones
-                                                                                                        bag = hListToPList (map (`apply` template) results)
-                                                                                                    in
-                                                                                                        Just (Subst [(index,bag)], subTree)
-    findAllSubstitution _        _     _                                                            = Nothing
+    findAllSubstitution strategy prog (Goal (Comb _ [template, called, Var index]:rest))
+        =   let
+                results = strategy $ sld strategy prog (Goal [called])
+                subTree = sld strategy prog (Goal rest)
+                --TODO for each template instance replace the free variables with new unused ones
+                bag = hListToPList (map (`apply` template) results)
+            in
+                Just (Subst [(index,bag)], subTree)
+    findAllSubstitution _        _     _
+        =       Nothing
 
-    {-
+    {-|
         Converts a haskell list of Terms to a Prolog List of Terms
     -}
     hListToPList::[Term]->Term
     hListToPList []          = Comb "[]" []
     hListToPList (head:tail) = Comb "." [head,hListToPList tail]
 
-    {-
-        given a Rule and a Goal will replace all Variables in then rule that are also in then Goal by new ones
+    {-|
+        Produces a functionally identical Rule to the input Rule
+        The resulting rule will have all rules present in the Goal
+        replaced by new ones
     -}
     (><) :: Rule -> Goal -> Rule
     (><) (pat :- cond) (Goal terms) = let

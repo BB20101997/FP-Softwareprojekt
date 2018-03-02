@@ -5,8 +5,10 @@ module Strategy where
     import Substitution
 
     mapFunction :: Strategy -> (Subst, SLDTree) -> [Subst]
-    mapFunction _          (substitution , Success) = [substitution]
-    mapFunction strategy   input                    = uncurry map $ bimap (flip compose) strategy input
+    mapFunction _          (substitution , Success)
+        = [substitution]
+    mapFunction strategy   input
+        = uncurry map $ bimap (flip compose) strategy input
 
     dfs :: Strategy
     dfs (SLDTree resolutions) = concatMap (mapFunction dfs) resolutions
@@ -14,9 +16,11 @@ module Strategy where
 
     bfs :: Strategy
     bfs (SLDTree resolutions) = bfsConcat $ map (mapFunction bfs) resolutions
-        where
-            bfsConcat :: [[a]] -> [a]
-            bfsConcat []                = []
-            bfsConcat listOfLists@(_:_) = [head | (head : _) <- listOfLists]
-                                          ++ bfsConcat [tail | (_:tail) <- listOfLists]
+      where
+          bfsConcat :: [[a]] -> [a]
+          bfsConcat []
+            = []
+          bfsConcat listOfLists@(_:_)
+            = [head | (head : _) <- listOfLists]
+              ++ bfsConcat [tail | (_:tail) <- listOfLists]
 
