@@ -42,6 +42,7 @@ module Unifikation(unify) where
         -- already unified
         Nothing                     ->  Just empty
         (Just (Var index, r)) ->
+            -- Occur Check
             if index `isIn` r
                 then Nothing
                 else

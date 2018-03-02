@@ -23,7 +23,8 @@ module Lib(
 
     {-|
        This type is used for performing substitutions.
-       The SLD module provides a function for converting Prolog Rules into this.
+       The the function 'BuildInRules.baseSubstitution' provides a function for
+       converting Prolog Rules into BuildInRules
     -}
     type BuildInRule = SLD -> Strategy -> Prog -> Goal -> Maybe (Subst, Goal)
 
@@ -44,9 +45,9 @@ module Lib(
     -- | This type represents a Strategy used to generate the result list from an SLDTree
     type Strategy = SLDTree -> [Subst]
 
-
-
 -- = Instances
+
+    -- | Pretty Substitutions
     instance (Pretty Subst) where
         prettyWithVars v (Subst [])          = "{}"
         prettyWithVars v (Subst (head:tail)) = "{"
@@ -59,6 +60,7 @@ module Lib(
             substTupToString v (index, term)
                 = prettyWithVars v (Var index) ++ " -> " ++ prettyWithVars v term
 
+    -- | Pretty SLDTree
     instance Pretty SLDTree where
         prettyWithVars _  Success          = "Success"
         prettyWithVars v (SLDTree stuff)   = "SLDTree [" ++ prettyWithVars v stuff ++ "]"

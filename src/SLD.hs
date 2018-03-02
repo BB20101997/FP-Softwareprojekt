@@ -1,4 +1,4 @@
-{-
+{-|
     This module handles creating an SLDTree from a Strategy, Program and Goal
 -}
 module SLD(sld,predefinedRules) where
@@ -6,8 +6,6 @@ module SLD(sld,predefinedRules) where
     import Data.Bifunctor
 
     import Lib
-    import Substitution
-    import Unifikation
     import BuildInRules
 
     {-|
@@ -34,40 +32,3 @@ module SLD(sld,predefinedRules) where
                   in
                     -- recurs on the remaining goal
                     fmap (second $ sld strategy program) result
-
-    {-|
-        Converts a Prolog Rule into a BuildInRule
-    -}
-    baseSubstitution :: Rule -> BuildInRule
-    -- |this should never happen
-    baseSubstitution _    _  _        _    (Goal [])
-        =                       Nothing
-    baseSubstitution rule _  strategy prog goal@(Goal (term:rest))
-        = let (pat :- cond) = rule >< goal in
-            case unify term pat of
-                Nothing     ->  Nothing
-                Just subst  ->
-                    let
-                        goal' = subst ->> (cond ++ rest)
-                    in          Just (subst, goal')
-
-    {-|
-        Produces a functionally identical Rule to the input Rule
-        The resulting rule will have all rules present in the Goal
-        replaced by new ones
-    -}
-    (><) :: Rule -> Goal -> Rule
-    (><) (pat :- cond) (Goal terms) = let
-                                        -- list of used Variables in then Goal
-                                        usedGoal    = concatMap varsInUse terms
-                                        -- list of usedGoal Variables in then Pattern
-                                        usedRule    = concatMap varsInUse (pat:cond)
-                                        -- list of unusedVariables
-                                        notUsed = [ x | x <- [0,1..], x `notElem` usedGoal, x `notElem` usedRule]
-                                        -- create a Substitution for creating then new Rule
-                                        subst   = Subst [(i, Var (notUsed !! i))| i<-usedGoal ]
-                                        -- creating pattern and condition for new Rule
-                                        newPat  = apply subst pat
-                                        (Goal newCond) = subst->>cond
-                                      in
-                                        newPat :- newCond

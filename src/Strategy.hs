@@ -1,27 +1,27 @@
 module Strategy where
     import Data.Bifunctor
+    import Data.List
 
     import Lib
     import Substitution
 
-    --TODO Document this module
-    mapFunction :: Strategy -> (Subst, SLDTree) -> [Subst]
-    mapFunction _          (substitution , Success)
-        = [substitution]
-    mapFunction strategy   input
-        = uncurry map $ bimap (flip compose) strategy input
+    -- | applies a Strategy to a list of resolutions
+    mapStrategy :: Strategy -> [(Subst,SLDTree)] -> [[Subst]]
+    mapStrategy s = map (mapFunction s)
+      where
+        -- | applies a Strategy to a single resolution
+        mapFunction :: Strategy -> (Subst, SLDTree) -> [Subst]
+        mapFunction _ (substitution , Success)
+            = [substitution]
+        mapFunction s xs
+            = uncurry map $ bimap (flip compose) s xs
 
+    -- |Performs a depth-first-search on an SLDTree searching for solutions
     dfs :: Strategy
-    dfs (SLDTree resolutions) = concatMap (mapFunction dfs) resolutions
+    dfs (SLDTree resolutions) = concat $ mapStrategy dfs resolutions
     dfs Success = [empty]
 
+    -- |Performs a breath-first-search on an SLDTree searching for solution
     bfs :: Strategy
-    bfs (SLDTree resolutions) = bfsConcat $ map (mapFunction bfs) resolutions
-      where
-          bfsConcat :: [[a]] -> [a]
-          bfsConcat []
-            = []
-          bfsConcat listOfLists@(_:_)
-            = [head | (head : _) <- listOfLists]
-              ++ bfsConcat [tail | (_:tail) <- listOfLists]
-
+    bfs (SLDTree resolutions) = concat $ transpose $ mapStrategy bfs resolutions
+    bfs Success = [empty]
