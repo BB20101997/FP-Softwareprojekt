@@ -58,6 +58,7 @@ module REPL where
                     sldTree   = sld strategy program goal
                     solutions = strategy sldTree
                 in do
+                    -- putStrLn $ prettyWithVars vars sldTree
                     outputSolutions vars solutions
                     readPrompt state
 
@@ -125,10 +126,11 @@ module REPL where
     exit :: Action
     exit _ _ = putStrLn "Goodbye"
 
-    -- |Shows if a program is currently loaded, if it is it shows the aviable predicates
+    -- |Shows all available predicates
     printInfo :: Action
     printInfo state@(strategy,Prog program) _
         = do
+            putStrLn "Buildin Predicates always show with Zero Arguments!"
             printPredicates(sort (nub (map showPredicates $ program++SLD.predefinedRules)))
             readPrompt state
 

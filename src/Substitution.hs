@@ -1,3 +1,6 @@
+{-|
+    This module implements Substitutions
+-}
 module Substitution where
     import Data.Bifunctor
 

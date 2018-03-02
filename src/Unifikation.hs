@@ -1,3 +1,7 @@
+{-|
+    This module implements Unification,
+    it's functionality is exposed through the unify function
+-}
 module Unifikation(unify) where
     import Lib
     import Substitution
@@ -26,12 +30,17 @@ module Unifikation(unify) where
                                    | otherwise = ds h1 h2
 
     {-|
-        TODO write documentation
+       This function tries to find a Substitution
+       to unify the two provided Terms.
+
+       When replacing a Var with another it will keep the Var from the second Parameter,
+       this means you generally want the second Parameter to be the Pattern
     -}
     unify :: Term -> Term -> Maybe Subst
     unify t1 t2 =
         case ds t1 t2  of
-        Nothing                     ->  Just empty -- already unified
+        -- already unified
+        Nothing                     ->  Just empty
         (Just (Var index, r)) ->
             if index `isIn` r
                 then Nothing
