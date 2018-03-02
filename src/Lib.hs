@@ -26,11 +26,17 @@ module Lib(
     type SLD = (Strategy -> Prog -> Goal -> SLDTree)
 
     {-|
+        The Parameter for the internal state of the sld function
+    -}
+    type SLDParameter = ([VarIndex],Strategy,Prog)
+
+    {-|
        This type is used for performing substitutions.
        The the function 'BuildInRules.baseSubstitution' provides a function for
        converting Prolog Rules into BuildInRules
     -}
-    type BuildInRule = SLD -> Strategy -> Prog -> Goal -> Maybe (Subst, Goal)
+    type BuildInRule =  (SLDParameter->Goal->SLDTree) -> SLDParameter ->
+                       Goal -> Maybe (Subst, SLDTree)
 
     {-|
         This is the type of a SLDTree,
@@ -93,3 +99,7 @@ module Lib(
     varsInUse :: Term -> [VarIndex]
     varsInUse (Var v)        = [v]
     varsInUse (Comb _ terms) = [x | term <- terms, x <- varsInUse term]
+
+    -- | returns the List of Variable Indices used by the Goal
+    varsInGoal :: Goal -> [VarIndex]
+    varsInGoal (Goal terms) = concatMap varsInUse terms

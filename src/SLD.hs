@@ -1,9 +1,8 @@
 {-|
     This module handles creating an SLDTree from a Strategy, Program and Goal
 -}
-module SLD(sld, predefinedRules) where
+module SLD(sld, rulesMapToRules) where
     import Data.Maybe
-    import Data.Bifunctor
 
     import Lib
     import BuildInRule
@@ -13,11 +12,13 @@ module SLD(sld, predefinedRules) where
         this function will produce the corresponding SLDTree
     -}
     sld :: SLD
-    sld _        _                   (Goal [])
+    sld strategy prog goal = sldWithVars (varsInGoal goal, strategy, prog) goal
+
+    sldWithVars::SLDParameter -> Goal -> SLDTree
+    sldWithVars _ (Goal [])
         = Success
-    sld strategy prog@(Prog rules) goal
-        = SLDTree $ catMaybes   [substitute rule
-                                |rule <- predefinedRules ++ rules]
+    sldWithVars param@(_, _, Prog rules) goal
+        = SLDTree $ catMaybes [substitute r | r <- predefinedRules ++ rules]
           where
             -- | tries to perform a substitution for the given rule
             substitute :: Rule -> Maybe (Subst, SLDTree)
@@ -29,8 +30,6 @@ module SLD(sld, predefinedRules) where
                     rule' = baseSubstitution rule
                     -- find a build in function or use rule'
                     func = fromMaybe rule' (lookup op predefinedRulesMap)
-                    -- apply to Maybe get a Substitution and the remaining goal
-                    result = func sld strategy prog goal
                   in
-                    -- recurs on the remaining goal
-                    fmap (second $ sld strategy prog) result
+                    -- apply ruleSubstitution
+                    func sldWithVars param goal

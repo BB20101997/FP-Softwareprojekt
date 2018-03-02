@@ -9,6 +9,7 @@ module REPL where
     import Parser
     import SLD
     import Strategy
+    import BuildInRule
 
     -- |The state at the start of the Interface
     initState :: State
