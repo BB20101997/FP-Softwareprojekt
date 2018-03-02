@@ -1,5 +1,6 @@
 module Pretty where
     import Data.Maybe
+    import Data.List
 
     import Type
 
@@ -18,18 +19,18 @@ module Pretty where
 
 
     instance (Pretty Term) where
-        prettyWithVars v (Var x)                = fromMaybe (fromJust $ x `lookup` defaultVarNames) (x `lookup` v)
-        prettyWithVars v (Comb "." [x, Var xs]) = "[ " ++ prettyWithVars v x ++ "| " ++ prettyWithVars v (Var xs) ++ " ]"
-        prettyWithVars v (Comb "." [x])         = "[ " ++ prettyWithVars v x ++ " ]"
-        prettyWithVars v (Comb "." (x:xs))      = "[ " ++ prettyWithVars v x ++ ", " ++ prettyWithVars v xs ++ " ]"
-        prettyWithVars v (Comb y [])            = y
-        prettyWithVars v (Comb y [x])           = y ++ "( " ++ prettyWithVars v x ++ " )"
-        prettyWithVars v (Comb y (x:xs))        = y ++ "( " ++ prettyWithVars v x ++ ", " ++ prettyWithVars v xs ++ " )"
+        prettyWithVars v (Var x)                       = fromMaybe (fromJust $ x `lookup` defaultVarNames) (x `lookup` v)
+        prettyWithVars v (Comb "." [x,Comb "[]" []])   = "[" ++ prettyWithVars v x ++ "]"
+        prettyWithVars v (Comb "." [x,r@(Comb "." _)]) = "[" ++ prettyWithVars v x ++ ", " ++ (tail.init $ prettyWithVars v r) ++ "]"
+        prettyWithVars v (Comb "." [x,r])              = "[" ++ prettyWithVars v x ++ "|" ++ prettyWithVars v r ++ "]"
+        prettyWithVars v (Comb y [])                   = y
+        prettyWithVars v (Comb y [x])                  = y ++ "(" ++ prettyWithVars v x ++ ")"
+        prettyWithVars v (Comb y (x:xs))               = y ++ "(" ++ prettyWithVars v x ++ ", " ++ prettyWithVars v xs ++ ")"
 
-    instance (Pretty b) => (Pretty [b] ) where
+    instance (Pretty b) => (Pretty [b]) where
         prettyWithVars v []      = ""
         prettyWithVars v [x]     = prettyWithVars v x
         prettyWithVars v (x:xs)  = prettyWithVars v x ++ ", " ++ prettyWithVars v xs
 
-    instance (Pretty a, Pretty b)=>Pretty (a, b) where
+    instance (Pretty a, Pretty b) => Pretty (a, b) where
         prettyWithVars v (a, b) = '(':prettyWithVars v a ++ ", " ++ prettyWithVars v b ++ ")"
