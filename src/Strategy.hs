@@ -10,14 +10,14 @@ module Strategy where
     import Substitution
 
     -- | applies a Strategy to a list of resolutions
-    mapStrategy :: Strategy -> [(Subst,SLDTree)] -> [[Subst]]
-    mapStrategy s = map (mapFunction s)
+    mapStrategy :: Strategy -> [(Subst, SLDTree)] -> [[Subst]]
+    mapStrategy s = map mapFunction
       where
         -- | applies a Strategy to a single resolution
-        mapFunction :: Strategy -> (Subst, SLDTree) -> [Subst]
-        mapFunction _ (substitution , Success)
+        mapFunction :: (Subst, SLDTree) -> [Subst]
+        mapFunction (substitution , Success)
             = [substitution]
-        mapFunction s xs
+        mapFunction  xs
             = uncurry map $ bimap (flip compose) s xs
 
     -- |Performs a depth-first-search on an SLDTree searching for solutions

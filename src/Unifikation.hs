@@ -26,8 +26,10 @@ module Unifikation(unify) where
         | otherwise               = sub_ds x1 x2
           where
             sub_ds :: [Term] -> [Term] -> Maybe (Term, Term)
-            sub_ds (h1:t1) (h2:t2) | h1 == h2  = sub_ds t1 t2
-                                   | otherwise = ds h1 h2
+            sub_ds (x:xs) (y:ys) | x == y    = sub_ds xs ys
+                                 | otherwise = ds x y
+            -- | Should never happen, but -Wall
+            sub_ds _      _                  = Nothing
 
     {-|
        This function tries to find a Substitution

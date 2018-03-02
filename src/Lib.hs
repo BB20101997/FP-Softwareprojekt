@@ -2,7 +2,7 @@
     This Module provides Classes, Instances and Types
 -}
 module Lib(
-    module Lib,module Type,module Pretty
+    module Lib, module Type, module Pretty
     ) where
     import Type
     import Pretty
@@ -22,7 +22,7 @@ module Lib(
     -- == SLDTree Types
 
     -- | Just the signature of the sld Function in the SLD module
-    type SLD = (Strategy->Prog->Goal->SLDTree)
+    type SLD = (Strategy -> Prog -> Goal -> SLDTree)
 
     {-|
        This type is used for performing substitutions.
@@ -54,18 +54,16 @@ module Lib(
 
     -- | Pretty Substitutions
     instance (Pretty Subst) where
-        prettyWithVars v (Subst [])
+        prettyWithVars _ (Subst [])
             = "{}"
-        prettyWithVars v (Subst (head:tail))
-            =   '{':substTupToString v head
-                ++ [ x|tuple<-tail,x <- ", "++ substTupToString v tuple]
+        prettyWithVars v (Subst (x:xs))
+            =   '{':substTupToString x
+                ++ [t | tuple<-xs, t <- ", " ++ substTupToString tuple]
                 ++ "}"
           where
             -- |prettyWithVars for Tuples that are part of a Substitution
-            substTupToString :: [(VarIndex, String)] -> (VarIndex
-                                                        , Term
-                                                        ) -> String
-            substTupToString v (index, term)
+            substTupToString :: (VarIndex, Term) -> String
+            substTupToString (index, term)
                 = prettyWithVars v (Var index)
                     ++ " -> "
                     ++ prettyWithVars v term
@@ -79,18 +77,18 @@ module Lib(
 
     -- |To not edit Type we just implemented it ourselves
     instance (Eq Term) where
-        (==) (Var i) (Var i2) = i == i2
+        (==) (Var i) (Var i2)                  = i == i2
         (==) (Comb s r) (Comb s2 r2) | s == s2 = all (uncurry (==)) (zip r r2)
-        (==) _ _ = False
+        (==) _ _                               = False
 
 -- == Useful Stuff
 
     -- | returns True iff a Variable with the given Index is part of the Term
     isIn :: VarIndex -> Term -> Bool
-    isIn a (Var b) = a == b
-    isIn a (Comb b tb) = any (isIn a) tb
+    isIn a (Var b)     = a == b
+    isIn a (Comb _ ts) = any (isIn a) ts
 
     -- | returns the List of Variable Indices used by the Term)
     varsInUse :: Term -> [VarIndex]
     varsInUse (Var v)        = [v]
-    varsInUse (Comb _ terms) = [ x |term<-terms, x<-varsInUse term]
+    varsInUse (Comb _ terms) = [x | term <- terms, x <- varsInUse term]

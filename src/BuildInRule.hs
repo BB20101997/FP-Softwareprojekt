@@ -2,7 +2,7 @@
     This Module Provides a few pre-defined BuildInRules
     and a function for converting Prolog Rules to BuildInRules
 -}
-module BuildInRule(baseSubstitution,predefinedRules,predefinedRulesMap) where
+module BuildInRule(baseSubstitution, predefinedRules, predefinedRulesMap) where
     import Data.Char
     import Text.Read
 
@@ -28,9 +28,9 @@ module BuildInRule(baseSubstitution,predefinedRules,predefinedRulesMap) where
     -}
     baseSubstitution :: Rule -> BuildInRule
     -- |this should never happen
-    baseSubstitution _    _  _        _    (Goal [])
+    baseSubstitution _    _ _ _ (Goal [])
         =                       Nothing
-    baseSubstitution rule _  strategy prog goal@(Goal (term:rest))
+    baseSubstitution rule _ _ _ goal@(Goal (term:rest))
         = let (pat :- cond) = rule >< goal in
             case unify term pat of
                 Nothing     ->  Nothing
@@ -47,41 +47,41 @@ module BuildInRule(baseSubstitution,predefinedRules,predefinedRulesMap) where
     (><) :: Rule -> Goal -> Rule
     (><) (pat :- cond) (Goal terms)
         = let
-            -- list of used Variables in then Goal
-            usedG    = concatMap varsInUse terms
-            -- list of usedGoal Variables in then Pattern
-            usedR    = concatMap varsInUse (pat:cond)
-            -- list of unusedVariables
+            -- list of used Variables in the Goal
+            usedG   = concatMap varsInUse terms
+            -- list of used Variables in the Pattern
+            usedR   = concatMap varsInUse (pat:cond)
+            -- list of unused Variables
             notUsed = [ x | x <- [0,1..], x `notElem` usedG, x `notElem` usedR]
             -- create a Substitution for creating then new Rule
-            subst   = Subst [(i, Var (notUsed !! i))| i<-usedG ]
+            subst   = Subst [(i, Var (notUsed !! i)) | i <- usedG ]
             -- creating pattern and condition for new Rule
-            newPat  = apply subst pat
-            (Goal newCond) = subst->>cond
+            pat'    = apply subst pat
+            (Goal cond') = subst->>cond
           in
-            newPat :- newCond
+            pat' :- cond'
 
     {-|
        The Substitution function for the BuildInRule call
     -}
     callSubstitution :: BuildInRule
-    callSubstitution _ strategy prog (Goal (Comb "call" (Comb op as:bs):rgs))
+    callSubstitution _ _ _ (Goal (Comb "call" (Comb op as:bs):rgs))
         = Just  (Subst [], Goal (Comb op (as ++ bs) : rgs))
-    callSubstitution _ _        _    _
+    callSubstitution _ _ _ _
         = Nothing
 
     {-|
        The Substitution function for the BuildInRule is
     -}
     evalSubstitution :: BuildInRule
-    evalSubstitution _ strategy prog (Goal (Comb "is" [Var i, term]:rest))
+    evalSubstitution _ _ _ (Goal (Comb "is" [Var i, term]:rest))
         | Just just <- eval term
         =   let
                 substitution = single i $ case just of
                     Left  a -> Comb (              show a) []
                     Right a -> Comb (map toLower $ show a) []
             in  Just (substitution,Goal rest)
-    evalSubstitution _ _        _    _
+    evalSubstitution _ _ _ _
         =       Nothing
 
     {-|
@@ -144,24 +144,20 @@ module BuildInRule(baseSubstitution,predefinedRules,predefinedRulesMap) where
         evaluates a findall predicate
     -}
     findAllSubstitution :: BuildInRule
-    findAllSubstitution sld strategy prog (Goal
-                                            (Comb
-                                            "findall"
-                                            [template, called, Var index]:rest
-                                            )
-                                          )
-        =   let
+    findAllSubstitution sld strategy prog
+        (Goal (Comb "findall" [template, called, Var index]:rest))
+            = let
                 results = strategy $ sld strategy prog (Goal [called])
                 --TODO for each template instance replace the free variables with new unused ones
                 bag = hListToPList (map (`apply` template) results)
-            in
+              in
                 Just (Subst [(index,bag)], Goal rest)
     findAllSubstitution _   _        _     _
-        =       Nothing
+            =       Nothing
 
     {-|
         Converts a haskell list of Terms to a Prolog List of Terms
     -}
-    hListToPList::[Term]->Term
-    hListToPList []          = Comb "[]" []
-    hListToPList (head:tail) = Comb "." [head,hListToPList tail]
+    hListToPList :: [Term] -> Term
+    hListToPList []     = Comb "[]" []
+    hListToPList (x:xs) = Comb "." [x, hListToPList xs]

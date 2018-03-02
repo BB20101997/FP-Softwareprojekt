@@ -9,7 +9,6 @@ module REPL where
     import Parser
     import SLD
     import Strategy
-    import Substitution
 
     -- |The state at the start of the Interface
     initState :: State
@@ -37,7 +36,7 @@ module REPL where
 
     -- |Interprets the input from the user of the interface
     interpretPrompt :: Action
-    interpretPrompt state@(strategy, program) input
+    interpretPrompt state input
                     -- ignore empty input and ask again
                     | "" == input
                     = readPrompt state
@@ -56,7 +55,7 @@ module REPL where
     parseGoalAndEvalGoal :: Action
     parseGoalAndEvalGoal state@(strategy, program) input
         = case parseWithVars input of
-            Left error -> putStrLn error >> readPrompt state
+            Left err -> putStrLn err >> readPrompt state
             Right (goal, vars) ->
                 let
                     sldTree   = sld strategy program goal
@@ -70,10 +69,10 @@ module REPL where
     outputSolutions :: [(VarIndex, String)] -> [Subst] -> IO()
     outputSolutions _    []
         = putStrLn "No further Solutions!"
-    outputSolutions vars (head:rest)
+    outputSolutions vars (x:xs)
         = do
-            putStr $ prettyWithVars vars $ filterOutput vars head
-            promptFurtherSolutions  vars rest
+            putStr $ prettyWithVars vars $ filterOutput vars x
+            promptFurtherSolutions  vars xs
 
     {-
         Filters out all unnamed/anonymous Variable Substitutions
@@ -127,11 +126,11 @@ module REPL where
         if an error occurred the old program is used
     -}
     fileReadingResult :: State -> Either String Prog -> IO State
-    fileReadingResult state                  (Left e)
+    fileReadingResult state         (Left e)
         = do
             putStrLn ("Couldn't read file, the following error occurred:" ++ e)
             return state
-    fileReadingResult (strategy, oldProgram) (Right prog)
+    fileReadingResult (strategy, _) (Right prog)
         = do
             putStrLn "File read"
             return (strategy, prog)
@@ -142,7 +141,7 @@ module REPL where
 
     -- |Shows all available predicates
     printInfo :: Action
-    printInfo state@(strategy,Prog prog) _
+    printInfo state@(_, Prog prog) _
         = do
             putStrLn "Buildin Predicates always show with Zero Arguments!"
             printPredicates(sort $ nub $ map showPredicates
@@ -155,7 +154,7 @@ module REPL where
 
     -- |Returns a predicate with number of its arguments
     showPredicates :: Rule -> String
-    showPredicates (Comb nameOfPredicate listOfArguments :- predicateBody )
+    showPredicates (Comb nameOfPredicate listOfArguments :- _ )
         = nameOfPredicate ++ "/" ++ show (length listOfArguments) ++ "\n"
     -- |Impossible in prolog syntax
     showPredicates (Var _ :- _) = ""

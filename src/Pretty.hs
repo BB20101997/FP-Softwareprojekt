@@ -3,7 +3,6 @@
 -}
 module Pretty where
     import Data.Maybe
-    import Data.List
 
     import Type
 
@@ -31,7 +30,7 @@ module Pretty where
             = '[':prettyWithVars v x ++ ", " ++ tail (prettyWithVars v r)
         prettyWithVars v (Comb "." [x,r])
             = '[':prettyWithVars v x ++ '|': prettyWithVars v r ++ "]"
-        prettyWithVars v (Comb y [])
+        prettyWithVars _ (Comb y [])
             = y
         prettyWithVars v (Comb y [x])
             = y ++ '(':prettyWithVars v x ++ ")"
@@ -40,7 +39,7 @@ module Pretty where
 
     -- |Pretty for Pretty Arrays
     instance (Pretty b) => (Pretty [b]) where
-        prettyWithVars v []
+        prettyWithVars _ []
             = ""
         prettyWithVars v [x]
             = prettyWithVars v x

@@ -7,6 +7,9 @@ module SubstTest where
     import Lib
     import Substitution
 
+    instance Show Subst where
+        show = pretty
+
     instance (Arbitrary Subst) where
         arbitrary =
             do
