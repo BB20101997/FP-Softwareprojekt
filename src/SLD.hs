@@ -1,4 +1,4 @@
-module SLD(sld) where
+module SLD(sld,predefinedRules) where
     import Data.Char
     import Data.Maybe
 

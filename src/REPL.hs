@@ -98,8 +98,10 @@ module REPL where
 
     -- / Shows if a program is currently loaded, if it is it shows the aviable predicates
     printInfo :: Action
-    printInfo state@(strategy,Prog [])      _ = putStrLn "No aviable predicates, please load file" >> readPrompt state
-    printInfo state@(strategy,Prog program) _ = printPredicates(sort (nub (map showPredicates program))) >> readPrompt state
+    printInfo state@(strategy,Prog program) _ =
+        do
+            printPredicates(sort (nub (map showPredicates $ program++SLD.predefinedRules)))
+            readPrompt state
 
     -- / Prints the predicates of a program
     printPredicates :: [String] -> IO ()
