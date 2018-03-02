@@ -13,7 +13,10 @@ module Lib(
 
     -- | This Type is used for the current internal state of the REPL
     type State = (Strategy,Prog)
-    -- | This Type if for Actions that can be evoked from the main prompt of the REPL
+
+    {-
+        This is the Type of the REPL's main prompt actions
+    -}
     type Action = State -> String -> IO ()
 
     -- == SLDTree Types
@@ -42,28 +45,37 @@ module Lib(
 
     -- == Strategy Types
 
-    -- | This type represents a Strategy used to generate the result list from an SLDTree
+    {-
+        The Type for SLDTree solution search Strategies
+    -}
     type Strategy = SLDTree -> [Subst]
 
 -- = Instances
 
     -- | Pretty Substitutions
     instance (Pretty Subst) where
-        prettyWithVars v (Subst [])          = "{}"
-        prettyWithVars v (Subst (head:tail)) = "{"
-                                        ++ substTupToString v head
-                                        ++ [ x|tuple<-tail,x <- ","++ substTupToString v tuple]
-                                        ++ "}"
+        prettyWithVars v (Subst [])
+            = "{}"
+        prettyWithVars v (Subst (head:tail))
+            =   '{':substTupToString v head
+                ++ [ x|tuple<-tail,x <- ", "++ substTupToString v tuple]
+                ++ "}"
           where
             -- |prettyWithVars for Tuples that are part of a Substitution
-            substTupToString :: [(VarIndex, String)] -> (VarIndex, Term) -> String
+            substTupToString :: [(VarIndex, String)] -> (VarIndex
+                                                        , Term
+                                                        ) -> String
             substTupToString v (index, term)
-                = prettyWithVars v (Var index) ++ " -> " ++ prettyWithVars v term
+                = prettyWithVars v (Var index)
+                    ++ " -> "
+                    ++ prettyWithVars v term
 
     -- | Pretty SLDTree
     instance Pretty SLDTree where
-        prettyWithVars _  Success          = "Success"
-        prettyWithVars v (SLDTree stuff)   = "SLDTree [" ++ prettyWithVars v stuff ++ "]"
+        prettyWithVars _  Success
+            = "Success"
+        prettyWithVars v (SLDTree stuff)
+            = "SLDTree [" ++ prettyWithVars v stuff ++ "]"
 
     -- |To not edit Type we just implemented it ourselves
     instance (Eq Term) where

@@ -33,7 +33,8 @@ module Unifikation(unify) where
        This function tries to find a Substitution
        to unify the two provided Terms.
 
-       When replacing a Var with another it will keep the Var from the second Parameter,
+       When replacing a Var with another
+       it will keep the Var from the second Parameter,
        this means you generally want the second Parameter to be the Pattern
     -}
     unify :: Term -> Term -> Maybe Subst

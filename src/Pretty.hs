@@ -23,20 +23,31 @@ module Pretty where
 
     -- |A Pretty Instance for Terms with special handling of Prolog Lists
     instance (Pretty Term) where
-        prettyWithVars v (Var x)                       = fromMaybe (fromJust $ x `lookup` defaultVarNames) (x `lookup` v)
-        prettyWithVars v (Comb "." [x,Comb "[]" []])   = "[" ++ prettyWithVars v x ++ "]"
-        prettyWithVars v (Comb "." [x,r@(Comb "." [_,_])]) = "[" ++ prettyWithVars v x ++ ", " ++ (tail.init $ prettyWithVars v r) ++ "]"
-        prettyWithVars v (Comb "." [x,r])              = "[" ++ prettyWithVars v x ++ "|" ++ prettyWithVars v r ++ "]"
-        prettyWithVars v (Comb y [])                   = y
-        prettyWithVars v (Comb y [x])                  = y ++ "(" ++ prettyWithVars v x ++ ")"
-        prettyWithVars v (Comb y (x:xs))               = y ++ "(" ++ prettyWithVars v x ++ ", " ++ prettyWithVars v xs ++ ")"
+        prettyWithVars v (Var x)
+            = fromMaybe (fromJust $ x `lookup` defaultVarNames) (x `lookup` v)
+        prettyWithVars v (Comb "." [x,Comb "[]" []])
+            = '[':prettyWithVars v x ++ "]"
+        prettyWithVars v (Comb "." [x,r@(Comb "." [_,_])])
+            = '[':prettyWithVars v x ++ ", " ++ tail (prettyWithVars v r)
+        prettyWithVars v (Comb "." [x,r])
+            = '[':prettyWithVars v x ++ '|': prettyWithVars v r ++ "]"
+        prettyWithVars v (Comb y [])
+            = y
+        prettyWithVars v (Comb y [x])
+            = y ++ '(':prettyWithVars v x ++ ")"
+        prettyWithVars v (Comb y (x:xs))
+            = y ++ '(':prettyWithVars v x ++ ", " ++ prettyWithVars v xs ++ ")"
 
     -- |Pretty for Pretty Arrays
     instance (Pretty b) => (Pretty [b]) where
-        prettyWithVars v []      = ""
-        prettyWithVars v [x]     = prettyWithVars v x
-        prettyWithVars v (x:xs)  = prettyWithVars v x ++ ", " ++ prettyWithVars v xs
+        prettyWithVars v []
+            = ""
+        prettyWithVars v [x]
+            = prettyWithVars v x
+        prettyWithVars v (x:xs)
+            = prettyWithVars v x ++ ", " ++ prettyWithVars v xs
 
     -- |We wanted Pretty Tuples somewhere, here we got them
     instance (Pretty a, Pretty b) => Pretty (a, b) where
-        prettyWithVars v (a, b) = '(':prettyWithVars v a ++ ", " ++ prettyWithVars v b ++ ")"
+        prettyWithVars v (a, b)
+            = '(':prettyWithVars v a ++ ", " ++ prettyWithVars v b ++ ")"

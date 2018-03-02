@@ -23,6 +23,10 @@ module REPL where
                             hFlush stdout
                             getLine >>= \input -> interpretPrompt state input
 
+    {-
+        The map from the name of an action to it's function
+        for the main prompt
+    -}
     menuEntries::[(String,Action)]
     menuEntries =   [(":help",printHelp)
                     ,(":quit",exit)
@@ -71,9 +75,13 @@ module REPL where
             putStr $ prettyWithVars vars $ filterOutput vars head
             promptFurtherSolutions  vars rest
 
+    {-
+        Filters out all unnamed/anonymous Variable Substitutions
+        from a Substitution
+    -}
     filterOutput :: [(VarIndex,String)] -> Subst -> Subst
     filterOutput vars (Subst sub)
-        = Subst [s | s@(index,_)<-sub,index `elem` [v | (v,name) <- vars,name/="_"]]
+        = Subst [s | s@(i,_)<-sub,i `elem` [v | (v,name) <- vars,name/="_"]]
 
     -- |Asks the user if more solutions should be displayed
     promptFurtherSolutions :: [(VarIndex, String)] -> [Subst] -> IO()
@@ -114,13 +122,19 @@ module REPL where
                                 parseResult <- parseFile filePath
                                 newState <- fileReadingResult state parseResult
                                 readPrompt newState
-
-    -- |Prints the result of the prolog file loading, if an error occurred the old program is used
+    {-|
+        Prints the result of the prolog file loading,
+        if an error occurred the old program is used
+    -}
     fileReadingResult :: State -> Either String Prog -> IO State
-    fileReadingResult state                  (Left error)
-        = putStrLn ("Couldn't read file, the following error occurred: " ++ error) >> return state
+    fileReadingResult state                  (Left e)
+        = do
+            putStrLn ("Couldn't read file, the following error occurred:" ++ e)
+            return state
     fileReadingResult (strategy, oldProgram) (Right prog)
-        = putStrLn "File read " >> return (strategy, prog)
+        = do
+            putStrLn "File read"
+            return (strategy, prog)
 
     -- |Closes the prolog interface
     exit :: Action
@@ -128,10 +142,11 @@ module REPL where
 
     -- |Shows all available predicates
     printInfo :: Action
-    printInfo state@(strategy,Prog program) _
+    printInfo state@(strategy,Prog prog) _
         = do
             putStrLn "Buildin Predicates always show with Zero Arguments!"
-            printPredicates(sort (nub (map showPredicates $ program++SLD.predefinedRules)))
+            printPredicates(sort $ nub $ map showPredicates
+                            $ prog ++ predefinedRules)
             readPrompt state
 
     -- |Prints the predicates of a program

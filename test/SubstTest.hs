@@ -8,10 +8,14 @@ module SubstTest where
     import Substitution
 
     instance (Arbitrary Subst) where
-        arbitrary = do
-                        size <- choose (0,5)
-                        singles <- vectorOf size (arbitrary `suchThat` (not . uncurry isIn))
-                        return $ foldl compose empty (map  (uncurry single) singles)
+        arbitrary =
+            do
+                size <- choose (0,5)
+                singles <- vectorOf size singleGen
+                return $ foldl compose empty (map  (uncurry single) singles)
+            where
+                singleGen :: Gen (VarIndex,Term)
+                singleGen = arbitrary `suchThat` (not . uncurry isIn)
 
     instance (Arbitrary Term) where
         arbitrary = frequency [(75,arbitraryVar),(25,arbitraryTerm)]

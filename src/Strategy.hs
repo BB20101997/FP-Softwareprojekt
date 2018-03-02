@@ -1,3 +1,7 @@
+{-|
+    This Module implements a BFS Strategy
+    and a DFS Strategy for finding solutions in an SLDTree
+-}
 module Strategy where
     import Data.Bifunctor
     import Data.List
