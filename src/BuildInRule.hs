@@ -9,6 +9,7 @@ module BuildInRule  (baseSubstitution
                     ) where
     import Data.Char
     import Text.Read
+    import Data.List
 
     import Lib
     import Substitution
@@ -62,7 +63,7 @@ module BuildInRule  (baseSubstitution
             -- create a Substitution for creating then new Rule
             subst   = Subst [(i, Var (notUsed !! i)) | i <- vs]
             -- new Set of used variables
-            v' = v ++ map (notUsed !!) vs
+            v' = nub $ v ++ usedR ++ map (notUsed !!) vs
             -- creating pattern and condition for new Rule
             pat'    = apply subst pat
             (Goal cond') = subst ->> cond
@@ -82,13 +83,13 @@ module BuildInRule  (baseSubstitution
        The Substitution function for the BuildInRule is
     -}
     evalSubstitution :: BuildInRule
-    evalSubstitution sld p (Goal (Comb "is" [Var i, term]:rest))
+    evalSubstitution sld p (Goal (Comb "is" [Var i, term] : rest))
         | Just just <- eval term
         =   let
                 substitution = single i $ case just of
                     Left  a -> Comb (              show a) []
                     Right a -> Comb (map toLower $ show a) []
-            in  Just (substitution, sld p $ Goal rest)
+            in  Just (substitution, sld p $ substitution ->> rest)
     evalSubstitution _   _ _
         =       Nothing
 
@@ -104,8 +105,8 @@ module BuildInRule  (baseSubstitution
                             Nothing   -> Nothing
     eval (Comb op [t1, t2])
         | (Just a, Just b) <-(eval t1, eval t2)
-        = case (a,b) of
-            (Left a', Left b')      -> evalInt op a' b'
+        = case (a, b) of
+            (Left  a', Left  b')    -> evalInt  op a' b'
             (Right a', Right b')    -> evalBool op a' b'
             _                       -> Nothing
     eval _
@@ -115,9 +116,9 @@ module BuildInRule  (baseSubstitution
         evaluated an arithmetic expression
     -}
     evalInt :: String -> Int -> Int -> Maybe (Either Int Bool)
-    evalInt op a b | op == "+"             = Just $ Left  $ a+b
-                   | op == "-"             = Just $ Left  $ a-b
-                   | op == "*"             = Just $ Left  $ a*b
+    evalInt op a b | op == "+"             = Just $ Left  $ a + b
+                   | op == "-"             = Just $ Left  $ a - b
+                   | op == "*"             = Just $ Left  $ a * b
                    | op == "div" && b /= 0 = Just $ Left  $ a `div` b
                    | op == "<"             = Just $ Right $ a < b
                    | op == ">"             = Just $ Right $ a > b
@@ -131,8 +132,8 @@ module BuildInRule  (baseSubstitution
         evaluates a boolean comparison
     -}
     evalBool :: String -> Bool -> Bool -> Maybe(Either Int Bool)
-    evalBool op a b | op == "=:="  = Just $ Right $ a==b
-                    | op == "=\\=" = Just $ Right $ a/=b
+    evalBool op a b | op == "=:="  = Just $ Right $ a == b
+                    | op == "=\\=" = Just $ Right $ a /= b
                     | otherwise    = Nothing
 
 
@@ -159,8 +160,9 @@ module BuildInRule  (baseSubstitution
                 baseInstances = map (`apply` template) results
                 (v',instances) = newFreeVariables v baseInstances
                 bag = hListToPList instances
+                subst = Subst [(index, bag)]
               in
-                Just (Subst [(index, bag)], sld (v', s, p) $ Goal rest)
+                Just (subst, sld (v', s, p) $ subst ->> rest)
     findAllSubstitution _    _     _
             =       Nothing
 
