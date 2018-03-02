@@ -24,11 +24,11 @@ module BuildInRule  (baseSubstitution
                          ]
 
     -- | The predefinedRulesMap converted to Rules
-    predefinedRules::[Rule]
+    predefinedRules :: [Rule]
     predefinedRules = rulesMapToRules predefinedRulesMap
 
     -- | A Prolog Rule for each predefined BuildInRule
-    rulesMapToRules :: [(String,BuildInRule)]->[Rule]
+    rulesMapToRules :: [(String, BuildInRule)] -> [Rule]
     rulesMapToRules rules = [Comb x [] :- [] | (x, _) <- rules]
 
     {-|
@@ -36,27 +36,27 @@ module BuildInRule  (baseSubstitution
     -}
     baseSubstitution :: Rule -> BuildInRule
     -- |this should never happen
-    baseSubstitution _    _    _     (Goal [])
+    baseSubstitution _    _    _        (Goal [])
         =                       Nothing
-    baseSubstitution rule sld (v,s,p) (Goal (term:rest))
+    baseSubstitution rule sld (v, s, p) (Goal (term:rest))
         = let (pat :- cond, v') = rule >< v in
             case unify term pat of
                 Nothing     ->  Nothing
                 Just subst  -> let goal' = subst ->> (cond ++ rest) in
-                                Just (subst,sld (v',s,p) goal')
+                                Just (subst, sld (v', s, p) goal')
 
     {-|
         Produces a functionally identical Rule to the input Rule
         The resulting rule will have all rules present in the Goal
         replaced by new ones
     -}
-    (><) :: Rule -> [VarIndex] -> (Rule,[VarIndex])
+    (><) :: Rule -> [VarIndex] -> (Rule, [VarIndex])
     (><) (pat :- cond) v
         = let
             -- list of used Variables in the Pattern
             usedR   = concatMap varsInUse (pat:cond)
             -- list of unused Variables
-            notUsed = [ x | x <- [0,1..], x `notElem` v, x `notElem` usedR]
+            notUsed = [ x | x <- [0, 1 .. ], x `notElem` v, x `notElem` usedR]
             -- already used and used in the rule
             vs = [i | i <- v, i `elem` usedR]
             -- create a Substitution for creating then new Rule
@@ -65,9 +65,9 @@ module BuildInRule  (baseSubstitution
             v' = v ++ map (notUsed !!) vs
             -- creating pattern and condition for new Rule
             pat'    = apply subst pat
-            (Goal cond') = subst->>cond
+            (Goal cond') = subst ->> cond
           in
-            (pat' :- cond',v')
+            (pat' :- cond', v')
 
     {-|
        The Substitution function for the BuildInRule call
@@ -88,7 +88,7 @@ module BuildInRule  (baseSubstitution
                 substitution = single i $ case just of
                     Left  a -> Comb (              show a) []
                     Right a -> Comb (map toLower $ show a) []
-            in  Just (substitution,sld p $ Goal rest)
+            in  Just (substitution, sld p $ Goal rest)
     evalSubstitution _   _ _
         =       Nothing
 
@@ -103,7 +103,7 @@ module BuildInRule  (baseSubstitution
                             Just bool -> Just $ Right bool
                             Nothing   -> Nothing
     eval (Comb op [t1, t2])
-        | (Just a,Just b) <-(eval t1, eval t2)
+        | (Just a, Just b) <-(eval t1, eval t2)
         = case (a,b) of
             (Left a', Left b')      -> evalInt op a' b'
             (Right a', Right b')    -> evalBool op a' b'
@@ -140,7 +140,7 @@ module BuildInRule  (baseSubstitution
         evaluated a negation
     -}
     notSubstitution :: String->BuildInRule
-    notSubstitution opCode sld p@(_,s,_) (Goal (Comb op goal:rest))
+    notSubstitution opCode sld p@(_, s, _) (Goal (Comb op goal:rest))
         | opCode == op
         =  case s (sld p (Goal goal)) of
              [] ->  Just (empty, sld p $ Goal rest)
@@ -152,28 +152,28 @@ module BuildInRule  (baseSubstitution
         evaluates a findall predicate
     -}
     findAllSubstitution :: BuildInRule
-    findAllSubstitution sld (v,s,p)
+    findAllSubstitution sld (v, s, p)
         (Goal (Comb "findall" [template, called, Var index]:rest))
             = let
-                results = s $ sld (v,s,p) (Goal [called])
+                results = s $ sld (v, s, p) (Goal [called])
                 baseInstances = map (`apply` template) results
                 (v',instances) = newFreeVariables v baseInstances
                 bag = hListToPList instances
               in
-                Just (Subst [(index,bag)], sld (v',s,p) $ Goal rest)
+                Just (Subst [(index, bag)], sld (v', s, p) $ Goal rest)
     findAllSubstitution _    _     _
             =       Nothing
 
     {-|
         replaces the free variables in a List of Terms with new unique once
     -}
-    newFreeVariables::[VarIndex]->[Term]->([VarIndex],[Term])
+    newFreeVariables :: [VarIndex] -> [Term] -> ([VarIndex], [Term])
     newFreeVariables v []     = (v,[])
     newFreeVariables v (x:xs) = let
-                                    (x':-_, v') = x :- [] >< v
-                                    (v'',xs')   = newFreeVariables v' xs
+                                    (x' :- _, v') = x :- [] >< v
+                                    (v'', xs')   = newFreeVariables v' xs
                                 in
-                                    (v'',x':xs')
+                                    (v'', x':xs')
 
 
     {-|

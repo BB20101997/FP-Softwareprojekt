@@ -14,7 +14,7 @@ module SLD(sld, rulesMapToRules) where
     sld :: SLD
     sld strategy prog goal = sldWithVars (varsInGoal goal, strategy, prog) goal
 
-    sldWithVars::SLDParameter -> Goal -> SLDTree
+    sldWithVars :: SLDParameter -> Goal -> SLDTree
     sldWithVars _ (Goal [])
         = Success
     sldWithVars param@(_, _, Prog rules) goal

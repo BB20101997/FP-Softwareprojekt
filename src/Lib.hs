@@ -13,7 +13,7 @@ module Lib(
     -- == REPL Types
 
     -- | This Type is used for the current internal state of the REPL
-    type State = (Strategy,Prog)
+    type State = (Strategy, Prog)
 
     {-|
         This is the Type of the REPL's main prompt actions
@@ -28,14 +28,14 @@ module Lib(
     {-|
         The Parameter for the internal state of the sld function
     -}
-    type SLDParameter = ([VarIndex],Strategy,Prog)
+    type SLDParameter = ([VarIndex], Strategy, Prog)
 
     {-|
        This type is used for performing substitutions.
        The the function 'BuildInRules.baseSubstitution' provides a function for
        converting Prolog Rules into BuildInRules
     -}
-    type BuildInRule =  (SLDParameter->Goal->SLDTree) -> SLDParameter ->
+    type BuildInRule =  (SLDParameter -> Goal -> SLDTree) -> SLDParameter ->
                        Goal -> Maybe (Subst, SLDTree)
 
     {-|
