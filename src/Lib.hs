@@ -18,18 +18,19 @@ module Lib(
 
     -- == SLDTree Types
 
+    type SLD = (Strategy->Prog->Goal->SLDTree)
     {-|
        This type is used for performing substitutions.
        The SLD module provides a function for converting Prolog Rules into this.
     -}
-    type BuildInRule = Strategy -> Prog -> Goal -> Maybe (Subst, SLDTree)
+    type BuildInRule = SLD -> Strategy -> Prog -> Goal -> Maybe (Subst, Goal)
 
     {-|
         This is the type of a SLDTree,
         the Success constructor is used to mark the end of a Successful Branch
     -}
-    data SLDTree = SLDTree [(Subst, SLDTree)] |  Success
-        deriving Show
+    data SLDTree = SLDTree [(Subst, SLDTree)] | Success
+        deriving() -- I don't know why this is necessary
 
     -- == Substitution Types
 
@@ -38,16 +39,12 @@ module Lib(
 
     -- == Strategy Types
 
-    -- | This type represents a Strategy used to generate the result list from a SLDTree
+    -- | This type represents a Strategy used to generate the result list from an SLDTree
     type Strategy = SLDTree -> [Subst]
 
 
 
 -- = Instances
-
-    instance (Show Subst) where
-       show = pretty
-
     instance (Pretty Subst) where
         prettyWithVars v (Subst [])          = "{}"
         prettyWithVars v (Subst (head:tail)) = "{"
@@ -72,15 +69,17 @@ module Lib(
 
 -- == Useful Stuff
 
-    --TODO document the rest of this module
+    -- | returns True iff a Variable with the given Index is part of the Term
     isIn :: VarIndex -> Term -> Bool
     isIn a (Var b) = a == b
     isIn a (Comb b tb) = any (isIn a) tb
 
-    varsInUse :: Term -> [Int]
+    -- | returns the List of Variable Indices used by the Term)
+    varsInUse :: Term -> [VarIndex]
     varsInUse (Var v)        = [v]
     varsInUse (Comb _ terms) = [ x |term<-terms, x<-varsInUse term]
 
+    --TODO document the rest of this module
     eval :: Term -> Maybe (Either Int Bool)
     eval (Comb a []) = case (readMaybe :: String -> Maybe Int) a of
                             Just int -> Just $ Left int
