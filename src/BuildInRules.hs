@@ -1,5 +1,6 @@
 module BuildInRules(predefinedRules,predefinedRulesMap) where
     import Data.Char
+    import Text.Read
 
     import Lib
     import Substitution
@@ -16,22 +17,49 @@ module BuildInRules(predefinedRules,predefinedRulesMap) where
     predefinedRules = [Comb x [] :- [] | (x, _) <- predefinedRulesMap]
 
     callSubstitution :: BuildInRule
-    callSubstitution _ strategy prog (Goal (Comb "call" (Comb a args:restArgs):restGoal))
-        = Just  (Subst [], Goal (Comb a (args ++ restArgs) : restGoal))
+    callSubstitution _ strategy prog (Goal (Comb "call" (Comb op as:bs):rgs))
+        = Just  (Subst [], Goal (Comb op (as ++ bs) : rgs))
     callSubstitution _ _        _    _
         = Nothing
 
     evalSubstitution :: BuildInRule
     evalSubstitution _ strategy prog (Goal (Comb "is" [Var i, term]:rest))
-                    | Just just <- eval term
-                    =   let
-                            substitution = single i $ case just of
-                                Left  a -> Comb (              show a) []
-                                Right a -> Comb (map toLower $ show a) []
-                        in  Just (substitution,Goal rest)
+        | Just just <- eval term
+        =   let
+                substitution = single i $ case just of
+                    Left  a -> Comb (              show a) []
+                    Right a -> Comb (map toLower $ show a) []
+            in  Just (substitution,Goal rest)
     evalSubstitution _ _        _    _
-                    =       Nothing
+        =       Nothing
 
+    eval :: Term -> Maybe (Either Int Bool)
+    eval (Comb a []) = case (readMaybe :: String -> Maybe Int) a of
+                            Just int -> Just $ Left int
+                            Nothing  -> case (readMaybe :: String -> Maybe Bool) a of
+                                                Just bool -> Just $ Right bool
+                                                Nothing   -> Nothing
+    eval (Comb op [t1, t2])    | (Just (Left a), Just (Left b)) <-(eval t1, eval t2)  = evalInt op a b
+                               | (Just (Right a), Just (Right b)) <-(eval t1, eval t2) = evalBool op a b
+    eval _ = Nothing
+
+    evalInt :: String -> Int -> Int -> Maybe (Either Int Bool)
+    evalInt op a b | op == "+"             = Just $ Left  $ a+b
+                   | op == "-"             = Just $ Left  $ a-b
+                   | op == "*"             = Just $ Left  $ a*b
+                   | op == "div" && b /= 0 = Just $ Left  $ a `div` b
+                   | op == "<"             = Just $ Right $ a < b
+                   | op == ">"             = Just $ Right $ a > b
+                   | op == "<="            = Just $ Right $ a <= b
+                   | op == ">="            = Just $ Right $ a >= b
+                   | op == "=:="           = Just $ Right $ a == b
+                   | op == "=\\="          = Just $ Right $ a /= b
+                   |otherwise              = Nothing
+
+    evalBool :: String -> Bool -> Bool -> Maybe(Either Int Bool)
+    evalBool op a b | op == "=:="  = Just $ Right $ a==b
+                    | op == "=\\=" = Just $ Right $ a/=b
+                    | otherwise    = Nothing
 
     notSubstitution :: String->BuildInRule
     notSubstitution opCode sld strategy prog (Goal (Comb op goal:rest))

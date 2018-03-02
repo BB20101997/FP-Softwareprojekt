@@ -1,5 +1,7 @@
+{-
+    This module handles creating an SLDTree from a Strategy, Program and Goal
+-}
 module SLD(sld,predefinedRules) where
-    import Data.Char
     import Data.Maybe
     import Data.Bifunctor
 
@@ -8,7 +10,6 @@ module SLD(sld,predefinedRules) where
     import Unifikation
     import BuildInRules
 
-    --TODO document more
     {-|
         Using the FIRST selection strategy given a Program and a Goal
         this function will produce the corresponding SLDTree

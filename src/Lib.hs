@@ -1,9 +1,9 @@
+{-|
+    This Module provides Classes, Instances and Types
+-}
 module Lib(
     module Lib,module Type,module Pretty
     ) where
-
-    import Text.Read
-
     import Type
     import Pretty
 
@@ -18,7 +18,9 @@ module Lib(
 
     -- == SLDTree Types
 
+    -- | Just the signature of the sld Function in the SLD module
     type SLD = (Strategy->Prog->Goal->SLDTree)
+
     {-|
        This type is used for performing substitutions.
        The SLD module provides a function for converting Prolog Rules into this.
@@ -78,34 +80,3 @@ module Lib(
     varsInUse :: Term -> [VarIndex]
     varsInUse (Var v)        = [v]
     varsInUse (Comb _ terms) = [ x |term<-terms, x<-varsInUse term]
-
-    --TODO document the rest of this module
-    eval :: Term -> Maybe (Either Int Bool)
-    eval (Comb a []) = case (readMaybe :: String -> Maybe Int) a of
-                            Just int -> Just $ Left int
-                            Nothing  -> case (readMaybe :: String -> Maybe Bool) a of
-                                                Just bool -> Just $ Right bool
-                                                Nothing   -> Nothing
-    eval (Comb op [t1, t2])    | (Just (Left a), Just (Left b)) <-(eval t1, eval t2)  = evalInt op a b
-                               | (Just (Right a), Just (Right b)) <-(eval t1, eval t2) = evalBool op a b
-    eval _ = Nothing
-
-    evalInt :: String -> Int -> Int -> Maybe (Either Int Bool)
-    evalInt op a b | op == "+"             = Just $ Left  $ a+b
-                   | op == "-"             = Just $ Left  $ a-b
-                   | op == "*"             = Just $ Left  $ a*b
-                   | op == "div" && b /= 0 = Just $ Left  $ a `div` b
-                   | op == "<"             = Just $ Right $ a < b
-                   | op == ">"             = Just $ Right $ a > b
-                   | op == "<="            = Just $ Right $ a <= b
-                   | op == ">="            = Just $ Right $ a >= b
-                   | op == "=:="           = Just $ Right $ a == b
-                   | op == "=\\="          = Just $ Right $ a /= b
-                   |otherwise              = Nothing
-
-    evalBool :: String -> Bool -> Bool -> Maybe(Either Int Bool)
-    evalBool op a b | op == "=:="  = Just $ Right $ a==b
-                    | op == "=\\=" = Just $ Right $ a/=b
-                    | otherwise    = Nothing
-
-
