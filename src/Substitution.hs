@@ -1,5 +1,6 @@
 module Substitution where
     import Data.Bifunctor
+    
     import Lib
 
     empty :: Subst

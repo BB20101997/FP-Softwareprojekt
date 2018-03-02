@@ -1,13 +1,13 @@
 module REPL where
     --Read Eval Print Loop
     import Data.List
+    import System.IO
 
     import Lib
     import Parser
     import SLD
     import Strategy
     import Substitution
-    import System.IO
 
     -- / The state at the start of the Interface
     initState :: State

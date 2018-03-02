@@ -1,9 +1,11 @@
 {-# LANGUAGE TemplateHaskell #-}
 module SubstTest where
     import Debug.Trace
+
+    import Test.QuickCheck
+
     import Lib
     import Substitution
-    import Test.QuickCheck
 
     instance (Arbitrary Subst) where
         arbitrary = do
