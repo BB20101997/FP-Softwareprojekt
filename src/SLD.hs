@@ -6,7 +6,7 @@ module SLD(sld,predefinedRules) where
     import Data.Bifunctor
 
     import Lib
-    import BuildInRules
+    import BuildInRule
 
     {-|
         Using the FIRST selection strategy given a Program and a Goal
@@ -20,7 +20,9 @@ module SLD(sld,predefinedRules) where
                                 | rule <- predefinedRules++rules]
           where
             -- | tries to perform a substitution for the given rule
-            substitute :: Rule -> Strategy -> Prog -> Goal -> Maybe (Subst,SLDTree)
+            substitute :: Rule -> Strategy -> Prog -> Goal -> Maybe (Subst
+                                                                    ,SLDTree
+                                                                    )
             substitute rule@(Comb op _ :- _) strategy prog goal
                 = let
                     -- in case it is not build in create a build in rule

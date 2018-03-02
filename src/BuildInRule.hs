@@ -2,7 +2,7 @@
     This Module Provides a few pre-defined BuildInRules
     and a function for converting Prolog Rules to BuildInRules
 -}
-module BuildInRules(baseSubstitution,predefinedRules,predefinedRulesMap) where
+module BuildInRule(baseSubstitution,predefinedRules,predefinedRulesMap) where
     import Data.Char
     import Text.Read
 
@@ -45,20 +45,21 @@ module BuildInRules(baseSubstitution,predefinedRules,predefinedRulesMap) where
         replaced by new ones
     -}
     (><) :: Rule -> Goal -> Rule
-    (><) (pat :- cond) (Goal terms) = let
-                                        -- list of used Variables in then Goal
-                                        usedGoal    = concatMap varsInUse terms
-                                        -- list of usedGoal Variables in then Pattern
-                                        usedRule    = concatMap varsInUse (pat:cond)
-                                        -- list of unusedVariables
-                                        notUsed = [ x | x <- [0,1..], x `notElem` usedGoal, x `notElem` usedRule]
-                                        -- create a Substitution for creating then new Rule
-                                        subst   = Subst [(i, Var (notUsed !! i))| i<-usedGoal ]
-                                        -- creating pattern and condition for new Rule
-                                        newPat  = apply subst pat
-                                        (Goal newCond) = subst->>cond
-                                      in
-                                        newPat :- newCond
+    (><) (pat :- cond) (Goal terms)
+        = let
+            -- list of used Variables in then Goal
+            usedG    = concatMap varsInUse terms
+            -- list of usedGoal Variables in then Pattern
+            usedR    = concatMap varsInUse (pat:cond)
+            -- list of unusedVariables
+            notUsed = [ x | x <- [0,1..], x `notElem` usedG, x `notElem` usedR]
+            -- create a Substitution for creating then new Rule
+            subst   = Subst [(i, Var (notUsed !! i))| i<-usedG ]
+            -- creating pattern and condition for new Rule
+            newPat  = apply subst pat
+            (Goal newCond) = subst->>cond
+          in
+            newPat :- newCond
 
     {-|
        The Substitution function for the BuildInRule call
@@ -87,14 +88,20 @@ module BuildInRules(baseSubstitution,predefinedRules,predefinedRulesMap) where
         evaluates an arithmetic/boolean Prolog Term
     -}
     eval :: Term -> Maybe (Either Int Bool)
-    eval (Comb a []) = case (readMaybe :: String -> Maybe Int) a of
-                            Just int -> Just $ Left int
-                            Nothing  -> case (readMaybe :: String -> Maybe Bool) a of
-                                                Just bool -> Just $ Right bool
-                                                Nothing   -> Nothing
-    eval (Comb op [t1, t2])    | (Just (Left a), Just (Left b)) <-(eval t1, eval t2)  = evalInt op a b
-                               | (Just (Right a), Just (Right b)) <-(eval t1, eval t2) = evalBool op a b
-    eval _ = Nothing
+    eval (Comb a [])
+        = case (readMaybe :: String -> Maybe Int) a of
+            Just int -> Just $ Left int
+            Nothing  -> case (readMaybe :: String -> Maybe Bool) a of
+                            Just bool -> Just $ Right bool
+                            Nothing   -> Nothing
+    eval (Comb op [t1, t2])
+        | (Just a,Just b) <-(eval t1, eval t2)
+        = case (a,b) of
+            (Left a', Left b')      -> evalInt op a' b'
+            (Right a', Right b')    -> evalBool op a' b'
+            _                       -> Nothing
+    eval _
+        =                              Nothing
 
     {-|
         evaluated an arithmetic expression
@@ -121,6 +128,9 @@ module BuildInRules(baseSubstitution,predefinedRules,predefinedRulesMap) where
                     | otherwise    = Nothing
 
 
+    {-|
+        evaluated a negation
+    -}
     notSubstitution :: String->BuildInRule
     notSubstitution opCode sld strategy prog (Goal (Comb op goal:rest))
         | opCode == op
@@ -130,8 +140,16 @@ module BuildInRules(baseSubstitution,predefinedRules,predefinedRulesMap) where
     notSubstitution _      _   _        _    _
         =           Nothing
 
+    {-|
+        evaluates a findall predicate
+    -}
     findAllSubstitution :: BuildInRule
-    findAllSubstitution sld strategy prog (Goal (Comb "findall" [template, called, Var index]:rest))
+    findAllSubstitution sld strategy prog (Goal
+                                            (Comb
+                                            "findall"
+                                            [template, called, Var index]:rest
+                                            )
+                                          )
         =   let
                 results = strategy $ sld strategy prog (Goal [called])
                 --TODO for each template instance replace the free variables with new unused ones
