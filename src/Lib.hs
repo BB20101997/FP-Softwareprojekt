@@ -1,6 +1,7 @@
 {-|
     This Module provides Classes, Instances and Types
 -}
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 module Lib(
     module Lib, module Type, module Pretty
     ) where
@@ -14,7 +15,7 @@ module Lib(
     -- | This Type is used for the current internal state of the REPL
     type State = (Strategy,Prog)
 
-    {-
+    {-|
         This is the Type of the REPL's main prompt actions
     -}
     type Action = State -> String -> IO ()
@@ -45,7 +46,7 @@ module Lib(
 
     -- == Strategy Types
 
-    {-
+    {-|
         The Type for SLDTree solution search Strategies
     -}
     type Strategy = SLDTree -> [Subst]
@@ -76,7 +77,7 @@ module Lib(
             = "SLDTree [" ++ prettyWithVars v stuff ++ "]"
 
     -- |To not edit Type we just implemented it ourselves
-    instance (Eq Term) where
+    instance  (Eq Term) where
         (==) (Var i) (Var i2)                  = i == i2
         (==) (Comb s r) (Comb s2 r2) | s == s2 = all (uncurry (==)) (zip r r2)
         (==) _ _                               = False

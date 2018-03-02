@@ -22,7 +22,7 @@ module REPL where
                             hFlush stdout
                             getLine >>= \input -> interpretPrompt state input
 
-    {-
+    {-|
         The map from the name of an action to it's function
         for the main prompt
     -}
@@ -74,7 +74,7 @@ module REPL where
             putStr $ prettyWithVars vars $ filterOutput vars x
             promptFurtherSolutions  vars xs
 
-    {-
+    {-|
         Filters out all unnamed/anonymous Variable Substitutions
         from a Substitution
     -}
