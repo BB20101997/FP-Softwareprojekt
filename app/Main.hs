@@ -1,5 +1,4 @@
 module Main where
-    import Type
     import REPL
 
     main :: IO ()
