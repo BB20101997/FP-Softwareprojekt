@@ -6,6 +6,8 @@ module SLD(sld,predefinedRules) where
     import Substitution
     import Unifikation
 
+    --TODO document more
+
     predefinedRulesMap :: [(String, BuildInRule)]
     predefinedRulesMap = [ ("call", callSubstitution)
                          , ("is", evalSubstitution)
@@ -48,6 +50,7 @@ module SLD(sld,predefinedRules) where
                         newGoal = subst ->> (cond ++ rest)
                         subTree = sld strategy prog newGoal
                     in          Just (subst, subTree)
+
 
     callSubstitution :: BuildInRule
     callSubstitution strategy prog (Goal (Comb _ (Comb a args:restArgs):restGoal))
@@ -104,15 +107,15 @@ module SLD(sld,predefinedRules) where
     -}
     (><) :: Rule -> Goal -> Rule
     (><) (pat :- cond) (Goal terms) = let
-                                        --list of used Variables in then Goal
+                                        -- list of used Variables in then Goal
                                         usedGoal    = concatMap varsInUse terms
-                                        --list of usedGoal Variables in then Pattern
+                                        -- list of usedGoal Variables in then Pattern
                                         usedRule    = concatMap varsInUse (pat:cond)
-                                        --list of unusedVariables
+                                        -- list of unusedVariables
                                         notUsed = [ x | x <- [0,1..], x `notElem` usedGoal, x `notElem` usedRule]
-                                        --create a Substitution for creating then new Rule
+                                        -- create a Substitution for creating then new Rule
                                         subst   = Subst [(i, Var (notUsed !! i))| i<-usedGoal ]
-                                        --creating pattern and condition for new Rule
+                                        -- creating pattern and condition for new Rule
                                         newPat  = apply subst pat
                                         (Goal newCond) = subst->>cond
                                       in

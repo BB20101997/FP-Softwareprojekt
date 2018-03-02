@@ -1,5 +1,7 @@
+{-|
+    Read Eval Print Loop
+-}
 module REPL where
-    -- |Read Eval Print Loop
     import Data.List
     import System.IO
 
@@ -17,7 +19,7 @@ module REPL where
     readPrompt :: State -> IO ()
     readPrompt state = do
                             putStr "?- "
-                            -- |make sure user knows we are waiting for him
+                            -- make sure user knows we are waiting for him
                             hFlush stdout
                             getLine >>= \input -> interpretPrompt state input
 
@@ -32,7 +34,7 @@ module REPL where
     -- |Interprets the input from the user of the interface
     interpretPrompt :: Action
     interpretPrompt state@(strategy, program) input
-                    -- |ignore empty input and ask again
+                    -- ignore empty input and ask again
                     | "" == input
                     = readPrompt state
                     | Just action <- lookup (head $ words input) menuEntries
@@ -76,15 +78,15 @@ module REPL where
     promptFurtherSolutions :: [(VarIndex, String)] -> [Subst] -> IO()
     promptFurtherSolutions vars rest
         = do
-            -- |make sure user knows we are waiting for him
+            -- make sure user knows we are waiting for him
             hFlush stdout
             x <- getLine
             case x of
-                -- |next result
+                -- next result
                 "," -> outputSolutions vars rest
-                -- |don't print further results
+                -- don't print further results
                 "." -> return ()
-                -- |invalid response, retry
+                -- invalid response, retry
                 _   -> do
                         putStr "Invalid Command '"
                         putStr x

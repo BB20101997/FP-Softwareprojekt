@@ -3,6 +3,7 @@ module Substitution where
 
     import Lib
 
+    -- |An empty Substitution
     empty :: Subst
     empty = Subst []
 

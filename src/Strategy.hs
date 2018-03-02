@@ -4,6 +4,7 @@ module Strategy where
     import Lib
     import Substitution
 
+    --TODO Document this module
     mapFunction :: Strategy -> (Subst, SLDTree) -> [Subst]
     mapFunction _          (substitution , Success)
         = [substitution]
