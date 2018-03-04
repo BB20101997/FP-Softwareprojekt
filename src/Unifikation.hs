@@ -9,6 +9,11 @@ module Unifikation(unify) where
     {-|
         the first term is expected to be the goal
         the second term is expected to be the pattern
+        Iff the Terms are equal Nothing will be returned
+        Iff the Terms can't be unified then a Just value will be
+            returned where the first component is a Comb Term
+        Iff the Terms are unequal and can be unified then a Just value will be
+            returned where the first component is a Val Term
     -}
     ds :: Term -> Term -> Maybe (Term, Term)
     -- |already equal nothing to substitute
@@ -21,9 +26,9 @@ module Unifikation(unify) where
     ds t1@(Comb _ _)   t2@(Var _)                                = Just (t2, t1)
     ds t1@(Comb s1 x1) t2@(Comb s2 x2)
         -- s1 and s2 don't match all or have different parameter count
-        | s1 /= s2 || length x1 /= length x2 = Just (t1, t2)
+        | s1 /= s2 || length x1 /= length x2                     = Just (t1, t2)
         -- searching for first substitution of the parameters
-        | otherwise               = sub_ds x1 x2
+        | otherwise                                              = sub_ds x1 x2
           where
             sub_ds :: [Term] -> [Term] -> Maybe (Term, Term)
             sub_ds (x:xs) (y:ys) | x == y    = sub_ds xs ys
@@ -44,6 +49,8 @@ module Unifikation(unify) where
         case ds t1 t2  of
         -- already unified
         Nothing                 ->  Just empty
+        -- replaced Term not a Variable
+        (Just (Comb _ _ , _))   -> Nothing
         (Just (Var index, r))
             -- Occur Check
             | index `isIn` r    -> Nothing
@@ -54,7 +61,5 @@ module Unifikation(unify) where
                     -- , appending our substitution
                     Just set    -> Just (compose set uni)
                     Nothing     -> Nothing
-        -- replaced Term not a Variable
-        (Just _)                -> Nothing
 
 
