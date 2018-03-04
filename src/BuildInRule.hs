@@ -83,15 +83,22 @@ module BuildInRule  (baseSubstitution
        The Substitution function for the BuildInRule is
     -}
     evalSubstitution :: BuildInRule
-    evalSubstitution sld p (Goal (Comb "is" [Var i, term] : rest))
+    evalSubstitution sld p (Goal (Comb "is" [v, term] : rest))
         | Just just <- eval term
         =   let
-                substitution = single i $ case just of
+                result = case just of
                     Left  a -> Comb (              show a) []
                     Right a -> Comb (map toLower $ show a) []
-            in  Just (substitution, sld p $ substitution ->> rest)
+            in case v of
+                Var i ->
+                    let
+                        substitution = single i result
+                        subTree = sld p $ substitution ->> rest
+                    in                  Just (substitution, subTree)
+                v' | v' == result ->    Just (empty,sld p $ Goal rest)
+                   | otherwise    ->    Nothing
     evalSubstitution _   _ _
-        =       Nothing
+        =                               Nothing
 
     {-|
         evaluates an arithmetic/boolean Prolog Term
