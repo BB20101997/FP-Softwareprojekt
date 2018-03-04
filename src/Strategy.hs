@@ -3,11 +3,11 @@
     and a DFS Strategy for finding solutions in an SLDTree
 -}
 module Strategy where
-    import Data.Bifunctor
-    import Data.List
+    import qualified Data.Bifunctor as Bi
+    import qualified Data.List as List
 
-    import Lib
-    import Substitution
+    import qualified Substitution as Subst
+    import Lib(Strategy, Subst, SLDTree(..))
 
     -- | applies a Strategy to a list of resolutions
     mapStrategy :: Strategy -> [(Subst, SLDTree)] -> [[Subst]]
@@ -18,14 +18,15 @@ module Strategy where
         mapFunction (substitution , Success)
             = [substitution]
         mapFunction  xs
-            = uncurry map $ bimap (flip compose) s xs
+            = uncurry map $ Bi.bimap (flip Subst.compose) s xs
 
     -- |Performs a depth-first-search on an SLDTree searching for solutions
     dfs :: Strategy
     dfs (SLDTree resolutions) = concat $ mapStrategy dfs resolutions
-    dfs Success = [empty]
+    dfs Success = [Subst.empty]
 
     -- |Performs a breath-first-search on an SLDTree searching for solution
     bfs :: Strategy
-    bfs (SLDTree resolutions) = concat $ transpose $ mapStrategy bfs resolutions
-    bfs Success = [empty]
+    bfs (SLDTree resolutions) = concat  $ List.transpose
+                                        $ mapStrategy bfs resolutions
+    bfs Success = [Subst.empty]

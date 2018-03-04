@@ -3,8 +3,9 @@
     it's functionality is exposed through the unify function
 -}
 module Unifikation(unify) where
-    import Lib
-    import Substitution
+    import qualified Lib
+    import qualified Substitution as Subst
+    import Lib(Term(..),Subst(..))
 
     {-|
         the first term is expected to be the goal
@@ -46,18 +47,18 @@ module Unifikation(unify) where
     unify t1 t2 =
         case ds t1 t2  of
         -- already unified
-        Nothing                 ->  Just empty
+        Nothing                 ->  Just Subst.empty
         -- replaced Term not a Variable
         (Just (Comb _ _ , _))   -> Nothing
         (Just (Var index, r))
             -- Occur Check
-            | index `isIn` r    -> Nothing
+            | index `Lib.isIn` r    -> Nothing
             | otherwise ->
                 let uni = Subst [(index, r)] in
-                case unify (apply uni t1) (apply uni t2) of
+                case unify (Subst.apply uni t1) (Subst.apply uni t2) of
                     --  further substitution succeeded
                     -- , appending our substitution
-                    Just set    -> Just (compose set uni)
+                    Just set    -> Just (Subst.compose set uni)
                     Nothing     -> Nothing
 
 

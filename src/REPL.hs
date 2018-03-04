@@ -2,14 +2,16 @@
     Read Eval Print Loop
 -}
 module REPL where
-    import Data.List
-    import System.IO
+    import qualified Data.List as List
+    import qualified System.IO as IO
 
-    import Lib
-    import Parser
-    import SLD
-    import Strategy
-    import BuildInRule
+    import qualified Parser
+    import qualified SLD
+    import qualified Rule
+    import Strategy(dfs,bfs)
+    import Lib  ( State, Action, VarIndex, Subst(..)
+                , Prog(..), Term(..), Rule(..), Pretty(..)
+                )
 
     -- |The state at the start of the Interface
     initState :: State
@@ -20,7 +22,7 @@ module REPL where
     readPrompt state = do
                             putStr "?- "
                             -- make sure user knows we are waiting for him
-                            hFlush stdout
+                            IO.hFlush IO.stdout
                             getLine >>= \input -> interpretPrompt state input
 
     {-|
@@ -55,11 +57,11 @@ module REPL where
     -}
     parseGoalAndEvalGoal :: Action
     parseGoalAndEvalGoal state@(strategy, program) input
-        = case parseWithVars input of
+        = case Parser.parseWithVars input of
             Left err -> putStrLn err >> readPrompt state
             Right (goal, vars) ->
                 let
-                    sldTree   = sld strategy program goal
+                    sldTree   = SLD.sld strategy program goal
                     solutions = strategy sldTree
                 in do
                     -- putStrLn $ prettyWithVars vars sldTree
@@ -88,7 +90,7 @@ module REPL where
     promptFurtherSolutions vars rest
         = do
             -- make sure user knows we are waiting for him
-            hFlush stdout
+            IO.hFlush IO.stdout
             x <- getLine
             case x of
                 -- next result
@@ -119,7 +121,7 @@ module REPL where
     loadFile :: Action
     loadFile state filePath = do
                                 putStrLn ("Loading file " ++ filePath)
-                                parseResult <- parseFile filePath
+                                parseResult <- Parser.parseFile filePath
                                 newState <- fileReadingResult state parseResult
                                 readPrompt newState
     {-|
@@ -145,9 +147,11 @@ module REPL where
     printInfo state@(_, Prog prog) _
         = do
             putStrLn "Buildin Predicates always show with Zero Arguments!"
-            printPredicates(sort $ nub $ map showPredicates
-                            $ prog ++ predefinedRules)
+            printPredicates(sn . map showPredicates $ prog ++ rules)
             readPrompt state
+          where
+            sn = List.sort.List.nub
+            rules = Rule.buildInToPrologRule Rule.predefinedRules
 
     -- |Prints the predicates of a program
     printPredicates :: [String] -> IO ()

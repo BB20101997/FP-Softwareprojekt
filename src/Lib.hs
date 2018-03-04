@@ -2,9 +2,11 @@
     This Module provides Classes, Instances and Types
 -}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-module Lib(
-    module Lib, module Type, module Pretty
-    ) where
+module Lib  ( module Lib
+            , module Type
+            , module Pretty
+            ) where
+
     import Type
     import Pretty
 
@@ -28,14 +30,23 @@ module Lib(
     {-|
         The Parameter for the internal state of the sld function
     -}
-    type SLDParameter = ([VarIndex], Strategy, Prog)
+    data SLDParameter = SLDParameter
+                        { usedBuildIn  :: [BuildInRule]
+                        , usedStrategy :: Strategy
+                        , usedVars     :: [VarIndex]
+                        , usedProgram  :: Prog
+                        }
+
+    {-
+        The Type for Build in Prolog Predicates
+    -}
+    type BuildInRule = (String,RuleApplicator)
 
     {-|
-       This type is used for performing substitutions.
-       The the function 'BuildInRules.baseSubstitution' provides a function for
-       converting Prolog Rules into BuildInRules
+        This is the Type of a function
+        that applies the substitution for one specific rule
     -}
-    type BuildInRule =  (SLDParameter -> Goal -> SLDTree) -> SLDParameter ->
+    type RuleApplicator =  (SLDParameter -> Goal -> SLDTree) -> SLDParameter ->
                        Goal -> Maybe (Subst, SLDTree)
 
     {-|
@@ -103,3 +114,5 @@ module Lib(
     -- | returns the List of Variable Indices used by the Goal
     varsInGoal :: Goal -> [VarIndex]
     varsInGoal (Goal terms) = concatMap varsInUse terms
+
+

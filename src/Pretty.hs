@@ -2,9 +2,9 @@
     Defines the Pretty class and a few instances
 -}
 module Pretty where
-    import Data.Maybe
+    import Data.Maybe(fromMaybe,fromJust)
 
-    import Type
+    import Type(VarIndex,Term(..))
 
     -- |If no Variable names are specified pretty uses these as default
     defaultVarNames :: [(VarIndex, String)]
