@@ -100,11 +100,9 @@ module BuildInRule  (baseSubstitution
     -}
     eval :: Term -> Maybe (Either Int Bool)
     eval (Comb a [])
-        = case (readMaybe :: String -> Maybe Int) a of
-            Just int -> Just $ Left int
-            Nothing  -> case (readMaybe :: String -> Maybe Bool) a of
-                            Just bool -> Just $ Right bool
-                            Nothing   -> Nothing
+        | Just int  <- readMaybe a = Just $ Left int
+        | Just bool <- readMaybe a = Just $ Right bool
+        | otherwise                 = Nothing
     eval (Comb op [t1, t2])
         | (Just a, Just b) <-(eval t1, eval t2)
         = case (a, b) of
@@ -138,17 +136,15 @@ module BuildInRule  (baseSubstitution
                     | op == "=\\=" = Just $ Right $ a /= b
                     | otherwise    = Nothing
 
-
     {-|
         evaluated a negation
     -}
     notSubstitution :: String->BuildInRule
     notSubstitution opCode sld p@(_, s, _) (Goal (Comb op goal:rest))
         | opCode == op
-        =  case s (sld p (Goal goal)) of
-             [] ->  Just (empty, sld p $ Goal rest)
-             _  ->  Nothing
-    notSubstitution _      _   _         _
+        , [] <- s (sld p (Goal goal))
+        = Just (empty, sld p $ Goal rest)
+    notSubstitution _      _   _           _
         =           Nothing
 
     {-|
@@ -178,7 +174,6 @@ module BuildInRule  (baseSubstitution
                                     (v'', xs')   = newFreeVariables v' xs
                                 in
                                     (v'', x':xs')
-
 
     {-|
         Converts a haskell list of Terms to a Prolog List of Terms
