@@ -75,7 +75,7 @@ module BuildInRule  (baseSubstitution
     -}
     callSubstitution :: BuildInRule
     callSubstitution sld p (Goal (Comb "call" (Comb op as:bs):rgs))
-        = Just  (Subst [], sld p $ Goal (Comb op (as ++ bs) : rgs))
+        = Just  (empty, sld p $ Goal (Comb op (as ++ bs) : rgs))
     callSubstitution _   _ _
         = Nothing
 
@@ -89,14 +89,9 @@ module BuildInRule  (baseSubstitution
                 result = case just of
                     Left  a -> Comb (              show a) []
                     Right a -> Comb (map toLower $ show a) []
-            in case v of
-                Var i ->
-                    let
-                        substitution = single i result
-                        subTree = sld p $ substitution ->> rest
-                    in                  Just (substitution, subTree)
-                v' | v' == result ->    Just (empty,sld p $ Goal rest)
-                   | otherwise    ->    Nothing
+            in case unify v result of
+                Just subst  -> Just (subst,sld p $ subst ->> rest)
+                Nothing     -> Nothing
     evalSubstitution _   _ _
         =                               Nothing
 
@@ -161,17 +156,17 @@ module BuildInRule  (baseSubstitution
     -}
     findAllSubstitution :: BuildInRule
     findAllSubstitution sld (v, s, p)
-        (Goal (Comb "findall" [template, called, Var index]:rest))
+        (Goal (Comb "findall" [template, called, bag]:rest))
             = let
                 results = s $ sld (v, s, p) (Goal [called])
-                baseInstances = map (`apply` template) results
-                (v',instances) = newFreeVariables v baseInstances
-                bag = hListToPList instances
-                subst = Subst [(index, bag)]
-              in
-                Just (subst, sld (v', s, p) $ subst ->> rest)
+                instances = map (`apply` template) results
+                (v',instances') = newFreeVariables v instances
+                resultBag = hListToPList instances'
+              in case unify bag resultBag of
+                Just subst  ->  Just (subst, sld (v', s, p) $ subst ->> rest)
+                Nothing     ->  Nothing
     findAllSubstitution _    _     _
-            =       Nothing
+            =                   Nothing
 
     {-|
         replaces the free variables in a List of Terms with new unique once
