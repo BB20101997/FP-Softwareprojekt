@@ -1,3 +1,5 @@
+{-# LANGUAGE ViewPatterns #-}
+
 {-|
     This Module Provides a few pre-defined BuildInRules
     and a function for converting Prolog Rules to BuildInRules
@@ -100,18 +102,12 @@ module BuildInRule  (baseSubstitution
     -}
     eval :: Term -> Maybe (Either Int Bool)
     eval (Comb a [])
-        | Just int  <- readMaybe a = Just $ Left int
-        | Just bool <- readMaybe a = Just $ Right bool
-        | otherwise                 = Nothing
-    eval (Comb op [t1, t2])
-        | Just a <- eval t1
-        , Just b <- eval t2
-        = case (a, b) of
-            (Left  a', Left  b')    -> evalInt  op a' b'
-            (Right a', Right b')    -> evalBool op a' b'
-            _                       -> Nothing
-    eval _
-        =                              Nothing
+        | Just int  <- readMaybe a     = Just $ Left int
+        | Just bool <- readMaybe a     = Just $ Right bool
+    eval (Comb op [eval -> Just a, eval -> Just b])
+        | Left  a' <- a, Left  b' <- b = evalInt  op a' b'
+        | Right a' <- a, Right b' <- b = evalBool op a' b'
+    eval _                             = Nothing
 
     {-|
         evaluated an arithmetic expression
@@ -142,11 +138,10 @@ module BuildInRule  (baseSubstitution
     -}
     notSubstitution :: String->BuildInRule
     notSubstitution opCode sld p@(_, s, _) (Goal (Comb op goal:rest))
-        | opCode == op
-        , [] <- s (sld p (Goal goal))
+        | opCode == op, [] <- s (sld p (Goal goal))
         = Just (empty, sld p $ Goal rest)
     notSubstitution _      _   _           _
-        =           Nothing
+        = Nothing
 
     {-|
         evaluates a findall predicate
