@@ -8,7 +8,7 @@ module SLD(sld) where
     import qualified Rule
     import qualified Unifikation  as Uni
     import Lib ( Rule(..), Goal(..), SLDTree(..), SLDParameter(..)
-               , Prog(..), Term(..), SLD, Subst, RuleApplicator
+               , Prog(..), Term(..), Strategy, Subst, RuleApplicator
                )
     import Substitution((->>), (><))
 
@@ -16,23 +16,21 @@ module SLD(sld) where
         Using the FIRST selection strategy given a Program and a Goal
         this function will produce the corresponding SLDTree
     -}
-    sld :: SLD
+    sld :: Strategy -> Prog -> Goal -> SLDTree
     sld strategy prog goal
         = sld'  SLDParameter{ Lib.usedBuildIn  = Rule.predefinedRules
-                    , Lib.usedStrategy = strategy
-                    , Lib.usedVars     = Lib.varsInGoal goal
-                    , Lib.usedProgram  = prog
-                    }
+                            , Lib.usedStrategy = strategy
+                            , Lib.usedVars     = Lib.varsInGoal goal
+                            , Lib.usedProgram  = prog
+                            }
                 goal
 
     sld' :: SLDParameter -> Goal -> Lib.SLDTree
-    sld' _
-                (Goal [])
+    sld' _                      (Goal [])
         = Success
     sld' param@SLDParameter { Lib.usedProgram = Prog rules
                             , Lib.usedBuildIn = preRules
-                            }
-        goal
+                            }   goal
         = SLDTree $ Maybe.catMaybes [substitute r
                               | r <- Rule.buildInToPrologRule preRules ++ rules]
           where
@@ -45,7 +43,7 @@ module SLD(sld) where
                     -- in case it is not build in create a build in rule
                     rule' = baseSubstitution rule
                     -- find a build in function or use rule'
-                    func = Maybe.fromMaybe rule' (lookup op preRules)
+                    func  = Maybe.fromMaybe rule' (lookup op preRules)
                   in
                     -- apply ruleSubstitution
                     func sld' param goal
@@ -55,7 +53,7 @@ module SLD(sld) where
     -}
     baseSubstitution :: Rule -> RuleApplicator
     -- |this should never happen
-    baseSubstitution _    _    _        (Goal [])
+    baseSubstitution _    _ _ (Goal [])
         =                       Nothing
     baseSubstitution rule s p (Goal (term:rest))
         = let (pat :- cond, v') = rule >< usedVars p in

@@ -24,9 +24,6 @@ module Lib  ( module Lib
 
     -- == SLDTree Types
 
-    -- | Just the signature of the sld Function in the SLD module
-    type SLD = (Strategy -> Prog -> Goal -> SLDTree)
-
     {-|
         The Parameter for the internal state of the sld function
     -}
@@ -40,7 +37,7 @@ module Lib  ( module Lib
     {-
         The Type for Build in Prolog Predicates
     -}
-    type BuildInRule = (String,RuleApplicator)
+    type BuildInRule = (String, RuleApplicator)
 
     {-|
         This is the Type of a function
@@ -95,9 +92,9 @@ module Lib  ( module Lib
 
     -- |To not edit Type we just implemented it ourselves
     instance  (Eq Term) where
-        (==) (Var i) (Var i2)                  = i == i2
+        (==) (Var i)    (Var i2)               = i == i2
         (==) (Comb s r) (Comb s2 r2) | s == s2 = all (uncurry (==)) (zip r r2)
-        (==) _ _                               = False
+        (==) _          _                      = False
 
 -- == Useful Stuff
 

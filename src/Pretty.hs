@@ -2,13 +2,13 @@
     Defines the Pretty class and a few instances
 -}
 module Pretty where
-    import Data.Maybe(fromMaybe,fromJust)
+    import Data.Maybe(fromMaybe, fromJust)
 
-    import Type(VarIndex,Term(..))
+    import Type(VarIndex, Term(..))
 
     -- |If no Variable names are specified pretty uses these as default
     defaultVarNames :: [(VarIndex, String)]
-    defaultVarNames = [(i, 'A':show i)|i<-[0..]]
+    defaultVarNames = [(i, 'A':show i) | i <- [0 ..]]
 
     -- | Show but pretty and with optional Variable names
     class Pretty a where
@@ -24,11 +24,11 @@ module Pretty where
     instance (Pretty Term) where
         prettyWithVars v (Var x)
             = fromMaybe (fromJust $ x `lookup` defaultVarNames) (x `lookup` v)
-        prettyWithVars v (Comb "." [x,Comb "[]" []])
+        prettyWithVars v (Comb "." [x, Comb "[]" []])
             = '[':prettyWithVars v x ++ "]"
-        prettyWithVars v (Comb "." [x,r@(Comb "." [_,_])])
+        prettyWithVars v (Comb "." [x, r@(Comb "." [_, _])])
             = '[':prettyWithVars v x ++ ", " ++ tail (prettyWithVars v r)
-        prettyWithVars v (Comb "." [x,r])
+        prettyWithVars v (Comb "." [x, r])
             = '[':prettyWithVars v x ++ '|': prettyWithVars v r ++ "]"
         prettyWithVars _ (Comb y [])
             = y

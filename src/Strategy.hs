@@ -15,18 +15,21 @@ module Strategy where
       where
         -- | applies a Strategy to a single resolution
         mapFunction :: (Subst, SLDTree) -> [Subst]
-        mapFunction (substitution , Success)
+        mapFunction (substitution, Success)
             = [substitution]
         mapFunction  xs
             = uncurry map $ Bi.bimap (flip Subst.compose) s xs
 
     -- |Performs a depth-first-search on an SLDTree searching for solutions
     dfs :: Strategy
-    dfs (SLDTree resolutions) = concat $ mapStrategy dfs resolutions
-    dfs Success = [Subst.empty]
+    dfs (SLDTree resolutions)
+        = concat                  $ mapStrategy dfs resolutions
+    dfs Success
+        = [Subst.empty]
 
     -- |Performs a breath-first-search on an SLDTree searching for solution
     bfs :: Strategy
-    bfs (SLDTree resolutions) = concat  $ List.transpose
-                                        $ mapStrategy bfs resolutions
-    bfs Success = [Subst.empty]
+    bfs (SLDTree resolutions)
+        = concat $ List.transpose $ mapStrategy bfs resolutions
+    bfs Success
+        = [Subst.empty]

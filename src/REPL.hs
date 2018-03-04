@@ -43,8 +43,10 @@ module REPL where
                     -- ignore empty input and ask again
                     | "" == input
                     = readPrompt state
+                    -- try to find menu entry
                     | Just action <- lookup (head $ words input) menuEntries
                     = action state $ unwords $ tail $ words input
+                    -- parse it as a goal and evaluate it
                     | otherwise
                     = parseGoalAndEvalGoal state input
 
@@ -58,7 +60,9 @@ module REPL where
     parseGoalAndEvalGoal :: Action
     parseGoalAndEvalGoal state@(strategy, program) input
         = case Parser.parseWithVars input of
-            Left err -> putStrLn err >> readPrompt state
+            -- Print parser error message
+            Left err           -> putStrLn err >> readPrompt state
+            -- Parsing successful evaluate goal
             Right (goal, vars) ->
                 let
                     sldTree   = SLD.sld strategy program goal
@@ -83,7 +87,10 @@ module REPL where
     -}
     filterOutput :: [(VarIndex,String)] -> Subst -> Subst
     filterOutput vars (Subst sub)
-        = Subst [s | s@(i,_)<-sub,i `elem` [v | (v,name) <- vars,name/="_"]]
+        = Subst [ s
+                | s@(i, _) <- sub
+                , i `elem`  [v | (v, name) <- vars, name /= "_"]
+                ]
 
     -- |Asks the user if more solutions should be displayed
     promptFurtherSolutions :: [(VarIndex, String)] -> [Subst] -> IO()
@@ -150,7 +157,10 @@ module REPL where
             printPredicates(sn . map showPredicates $ prog ++ rules)
             readPrompt state
           where
-            sn = List.sort.List.nub
+            sn :: Ord a => [a] -> [a]
+            sn    = List.sort.List.nub
+
+            rules :: [Rule]
             rules = Rule.buildInToPrologRule Rule.predefinedRules
 
     -- |Prints the predicates of a program
@@ -159,7 +169,7 @@ module REPL where
 
     -- |Returns a predicate with number of its arguments
     showPredicates :: Rule -> String
-    showPredicates (Comb nameOfPredicate listOfArguments :- _ )
+    showPredicates (Comb nameOfPredicate listOfArguments :- _)
         = nameOfPredicate ++ "/" ++ show (length listOfArguments) ++ "\n"
     -- |Impossible in prolog syntax
     showPredicates (Var _ :- _) = ""

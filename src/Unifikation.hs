@@ -46,19 +46,19 @@ module Unifikation(unify) where
     unify :: Term -> Term -> Maybe Subst
     unify t1 t2 =
         case ds t1 t2  of
-        -- already unified
-        Nothing                 ->  Just Subst.empty
-        -- replaced Term not a Variable
-        (Just (Comb _ _ , _))   -> Nothing
-        (Just (Var index, r))
-            -- Occur Check
-            | index `Lib.isIn` r    -> Nothing
-            | otherwise ->
-                let uni = Subst [(index, r)] in
-                case unify (Subst.apply uni t1) (Subst.apply uni t2) of
-                    --  further substitution succeeded
-                    -- , appending our substitution
-                    Just set    -> Just (Subst.compose set uni)
-                    Nothing     -> Nothing
+            -- already unified
+            Nothing                 ->  Just Subst.empty
+            -- replaced Term not a Variable
+            (Just (Comb _ _ , _))   -> Nothing
+            (Just (Var index, r))
+                -- Occur Check
+                | index `Lib.isIn` r    -> Nothing
+                | otherwise ->
+                    let uni = Subst [(index, r)] in
+                    case unify (Subst.apply uni t1) (Subst.apply uni t2) of
+                        --  further substitution succeeded
+                        -- , appending our substitution
+                        Just set    -> Just (Subst.compose set uni)
+                        Nothing     -> Nothing
 
 
