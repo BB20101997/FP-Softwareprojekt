@@ -43,19 +43,18 @@ module Unifikation(unify) where
     unify t1 t2 =
         case ds t1 t2  of
         -- already unified
-        Nothing                     ->  Just empty
-        (Just (Var index, r)) ->
+        Nothing                 ->  Just empty
+        (Just (Var index, r))
             -- Occur Check
-            if index `isIn` r
-                then Nothing
-                else
-                    let uni = Subst [(index, r)] in
-                    case unify (apply uni t1) (apply uni t2) of
-                        --  further substitution succeeded
-                        -- , appending our substitution
-                        Just set    -> Just (compose set uni)
-                        Nothing     -> Nothing
+            | index `isIn` r    -> Nothing
+            | otherwise ->
+                let uni = Subst [(index, r)] in
+                case unify (apply uni t1) (apply uni t2) of
+                    --  further substitution succeeded
+                    -- , appending our substitution
+                    Just set    -> Just (compose set uni)
+                    Nothing     -> Nothing
         -- replaced Term not a Variable
-        (Just _)                    -> Nothing
+        (Just _)                -> Nothing
 
 
