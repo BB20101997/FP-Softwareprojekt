@@ -104,7 +104,8 @@ module BuildInRule  (baseSubstitution
         | Just bool <- readMaybe a = Just $ Right bool
         | otherwise                 = Nothing
     eval (Comb op [t1, t2])
-        | (Just a, Just b) <-(eval t1, eval t2)
+        | Just a <- eval t1
+        , Just b <- eval t2
         = case (a, b) of
             (Left  a', Left  b')    -> evalInt  op a' b'
             (Right a', Right b')    -> evalBool op a' b'
