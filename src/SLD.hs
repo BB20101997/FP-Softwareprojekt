@@ -48,7 +48,7 @@ module SLD(sld) where
                     -- apply ruleSubstitution
                     func sld' param goal
 
-                    {-|
+    {-|
         Converts a Prolog Rule into a RuleApplicator function
     -}
     baseSubstitution :: Rule -> RuleApplicator

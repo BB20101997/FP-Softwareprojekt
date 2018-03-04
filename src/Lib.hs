@@ -34,7 +34,7 @@ module Lib  ( module Lib
                         , usedProgram  :: Prog
                         }
 
-    {-
+    {-|
         The Type for Build in Prolog Predicates
     -}
     type BuildInRule = (String, RuleApplicator)
