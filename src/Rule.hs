@@ -13,7 +13,7 @@ module Rule ( buildInToPrologRule
 
     import qualified Lib
     import qualified Substitution as Subst
-    import qualified Unifikation as Uni
+    import qualified Unifikation  as Uni
     import Lib  ( BuildInRule, Rule(..), RuleApplicator
                 , Goal(..), Term(..), VarIndex
                 )
@@ -21,42 +21,39 @@ module Rule ( buildInToPrologRule
 
     -- | A Map of of a Name to a BuildInRule
     predefinedRules :: [BuildInRule]
-    predefinedRules = [ ("call", callSubstitution)
-                         , ("is", evalSubstitution)
-                         , ("not", notSubstitution "not")
-                         , ("\\+", notSubstitution "\\+")
-                         , ("findall", findAllSubstitution)
-                         ]
+    predefinedRules =   [ ("call"   , callSubstitution)
+                        , ("is"     , evalSubstitution)
+                        , ("not"    , notSubstitution "not")
+                        , ("\\+"    , notSubstitution "\\+")
+                        , ("findall", findAllSubstitution)
+                        ]
 
     -- | A Prolog Rule for each predefined BuildInRule
     buildInToPrologRule :: [BuildInRule] -> [Rule]
     buildInToPrologRule rules = [Comb x [] :- [] | (x, _) <- rules]
 
-
-
     {-|
        The Substitution function for the BuildInRule call
     -}
     callSubstitution :: RuleApplicator
-    callSubstitution sld p (Goal (Comb "call" (Comb op as:bs):rgs))
-        = Just  (Subst.empty, sld p $ Goal (Comb op (as ++ bs) : rgs))
-    callSubstitution _   _ _
+    callSubstitution _ _ (Goal (Comb "call" (Comb op as:bs):rgs))
+        = Just  (Subst.empty, Goal (Comb op (as ++ bs) : rgs))
+    callSubstitution _ _ _
         = Nothing
 
     {-|
        The Substitution function for the BuildInRule is
     -}
     evalSubstitution :: RuleApplicator
-    evalSubstitution sld p (Goal (Comb "is" [v, term] : rest))
+    evalSubstitution _ _ (Goal (Comb "is" [v, term] : rest))
         | Just just <- eval term
         =   let
-                result = case just of
+                result = Uni.unify v $ case just of
                     Left  a -> Comb (                   show a) []
                     Right a -> Comb (map Char.toLower $ show a) []
-            in case Uni.unify v result of
-                Just subst  -> Just (subst,sld p $ subst ->> rest)
-                Nothing     -> Nothing
-    evalSubstitution _   _ _
+            in
+                fmap (\s -> (s, s->>rest)) result
+    evalSubstitution _ _ _
         =                               Nothing
 
     {-|
@@ -101,7 +98,7 @@ module Rule ( buildInToPrologRule
     notSubstitution :: String->RuleApplicator
     notSubstitution opCode sld p (Goal (Comb op goal:rest))
         | opCode == op, [] <- Lib.usedStrategy p (sld p (Goal goal))
-        = Just (Subst.empty, sld p $ Goal rest)
+        = Just (Subst.empty, Goal rest)
     notSubstitution _      _   _ _
         = Nothing
 
@@ -113,10 +110,10 @@ module Rule ( buildInToPrologRule
         = let
             results = Lib.usedStrategy p $ sld p (Goal [called])
             instances = map (`Subst.apply` template) results
-            (v',instances') = newFreeVariables (Lib.usedVars p) instances
+            instances' = newFreeVariables (Lib.usedVars p) instances
             resultBag = hListToPList instances'
           in case Uni.unify bag resultBag of
-            Just s  ->  Just (s, sld p{Lib.usedVars = v'} $ s ->> rs)
+            Just s  ->  Just (s, s ->> rs)
             Nothing     ->  Nothing
     findAllSubstitution _   _ _
         =                   Nothing
@@ -124,13 +121,13 @@ module Rule ( buildInToPrologRule
     {-|
         replaces the free variables in a List of Terms with new unique once
     -}
-    newFreeVariables :: [VarIndex] -> [Term] -> ([VarIndex], [Term])
-    newFreeVariables v []     = (v,[])
+    newFreeVariables :: [VarIndex] -> [Term] -> [Term]
+    newFreeVariables _ []     = []
     newFreeVariables v (x:xs) = let
-                                    (x' :- _, v') = x :- [] >< v
-                                    (v'', xs')   = newFreeVariables v' xs
+                                    x' :- _ = x :- [] >< v
+                                    v' = v ++ Lib.varsInUse x'
                                 in
-                                    (v'', x':xs')
+                                    x':newFreeVariables v' xs
 
     {-|
         Converts a haskell list of Terms to a Prolog List of Terms

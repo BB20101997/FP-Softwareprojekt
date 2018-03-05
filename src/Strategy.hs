@@ -2,7 +2,7 @@
     This Module implements a BFS Strategy
     and a DFS Strategy for finding solutions in an SLDTree
 -}
-module Strategy where
+module Strategy(dfs, bfs) where
     import qualified Data.Bifunctor as Bi
     import qualified Data.List as List
 

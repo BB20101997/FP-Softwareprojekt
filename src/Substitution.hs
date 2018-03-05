@@ -3,7 +3,6 @@
 -}
 module Substitution where
     import qualified Data.Bifunctor as Bi
-    import qualified Data.List as List
 
     import qualified Lib
     import Lib(Subst(..), VarIndex, Term(..), Goal(..), Rule(..))
@@ -37,16 +36,16 @@ module Substitution where
     compose (Subst a)  (Subst b)
         =   let
                 a' = map (Bi.second (apply $ Subst a)) b
-                b' = [elm | elm@(ai, _) <- a,ai `notElem` [bi | (bi,_) <- b]]
+                b' = [elm | elm@(ai, _) <- a, ai `notElem` [bi | (bi, _) <- b]]
             in
-                Subst $ a'++b'
+                Subst $ a' ++ b'
 
     {-|
         Produces a functionally identical Rule to the input Rule
         The resulting rule will have all rules present in the Goal
         replaced by new ones
     -}
-    (><) :: Rule -> [VarIndex] -> (Rule, [VarIndex])
+    (><) :: Rule -> [VarIndex] -> Rule
     (><) (pat :- cond) v
         = let
             -- list of used Variables in the Pattern
@@ -54,13 +53,10 @@ module Substitution where
             -- list of unused Variables
             notUsed = [ x | x <- [0, 1 .. ], x `notElem` v, x `notElem` usedR]
             -- already used and used in the rule
-            vs = [i | i <- v, i `elem` usedR]
+            vs      = [i | i <- v, i `elem` usedR]
             -- create a Substitution for creating then new Rule
             subst   = Subst [(i, Var (notUsed !! i)) | i <- vs]
-            -- new Set of used variables
-            v' = List.nub $ v ++ usedR ++ map (notUsed !!) vs
             -- creating pattern and condition for new Rule
             pat'    = apply subst pat
-            (Goal cond') = subst ->> cond
           in
-            (pat' :- cond', v')
+            pat' :- map (apply subst) cond

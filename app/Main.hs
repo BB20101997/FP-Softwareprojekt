@@ -1,5 +1,5 @@
 module Main where
-    import qualified REPL(readPrompt,initState)
+    import qualified REPL(readPrompt, initState)
 
     -- |This function just prints the welcome message and starts the REPL
     main :: IO ()

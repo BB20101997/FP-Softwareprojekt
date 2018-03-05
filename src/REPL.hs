@@ -1,7 +1,7 @@
 {-|
     Read Eval Print Loop
 -}
-module REPL where
+module REPL(readPrompt, initState) where
     import qualified Data.List as List
     import qualified System.IO as IO
 

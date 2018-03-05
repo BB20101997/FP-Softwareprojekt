@@ -2,6 +2,7 @@
     This module handles creating an SLDTree from a Strategy, Program and Goal
 -}
 module SLD(sld) where
+    import qualified Data.List  as List
     import qualified Data.Maybe as Maybe
 
     import qualified Lib
@@ -28,8 +29,9 @@ module SLD(sld) where
     sld' :: SLDParameter -> Goal -> Lib.SLDTree
     sld' _                      (Goal [])
         = Success
-    sld' param@SLDParameter { Lib.usedProgram = Prog rules
-                            , Lib.usedBuildIn = preRules
+    sld' param@SLDParameter { Lib.usedProgram   = Prog rules
+                            , Lib.usedBuildIn   = preRules
+                            , Lib.usedVars      = v
                             }   goal
         = SLDTree $ Maybe.catMaybes [substitute r
                               | r <- Rule.buildInToPrologRule preRules ++ rules]
@@ -44,9 +46,16 @@ module SLD(sld) where
                     rule' = baseSubstitution rule
                     -- find a build in function or use rule'
                     func  = Maybe.fromMaybe rule' (lookup op preRules)
-                  in
                     -- apply ruleSubstitution
-                    func sld' param goal
+                    res = func sld' param goal
+                  in case res of
+                    Nothing -> Nothing
+                    Just (subst, goal') ->
+                        let
+                            v' = List.nub $ v ++ Lib.varsInGoal goal'
+                            param' = param{usedVars = v'}
+                        in
+                            Just (subst, sld' param' goal')
 
     {-|
         Converts a Prolog Rule into a RuleApplicator function
@@ -55,9 +64,9 @@ module SLD(sld) where
     -- |this should never happen
     baseSubstitution _    _ _ (Goal [])
         =                       Nothing
-    baseSubstitution rule s p (Goal (term:rest))
-        = let (pat :- cond, v') = rule >< usedVars p in
+    baseSubstitution rule _ p (Goal (term:rest))
+        = let (pat :- cond) = rule >< usedVars p in
             case Uni.unify term pat of
                 Nothing     ->  Nothing
                 Just subst  -> let goal' = subst ->> (cond ++ rest) in
-                                Just (subst, s p{usedVars = v'} goal')
+                                Just (subst, goal')
