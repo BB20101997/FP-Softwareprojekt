@@ -61,8 +61,8 @@ vorfahre(N,V) :- vater(N,T),vorfahre(T,V).
 
 % Aufgabe 2.2
 
-lockup(K,[pair(K,V)|_],V).
-lockup(K,[_|KVs],V) :- lockup(K,KVs,V).
+lookup(Key,[(Key,V)|_],V).
+lookup(K,[_|KVs],V) :- lookup(K,KVs,V).
 
 member2(E,[E|R]) :- member(E,R).
 member2(E,[_|R]) :- member2(E,R).

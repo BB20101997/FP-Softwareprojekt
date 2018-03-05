@@ -26,6 +26,7 @@ module Rule ( buildInToPrologRule
                         , ("not"    , notSubstitution "not")
                         , ("\\+"    , notSubstitution "\\+")
                         , ("findall", findAllSubstitution)
+                        , ("",tupleSubstitution)
                         ]
 
     -- | A Prolog Rule for each predefined BuildInRule
@@ -117,6 +118,12 @@ module Rule ( buildInToPrologRule
             Nothing     ->  Nothing
     findAllSubstitution _   _ _
         =                   Nothing
+
+    tupleSubstitution :: RuleApplicator
+    tupleSubstitution _ _ (Goal (Comb "" terms : rest))
+        = Just (Subst.empty, Goal $ terms ++ rest)
+    tupleSubstitution _ _ _
+        = Nothing
 
     {-|
         replaces the free variables in a List of Terms with new unique once

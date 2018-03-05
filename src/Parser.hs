@@ -12,7 +12,7 @@ import Type
 class Parse a where
   parse :: String -> Either String a
   parseWithVars :: String -> Either String (a, [(VarIndex, String)])
-  
+
   parse = fmap fst . parseWithVars
 
 -- Try to parse a goal
@@ -60,9 +60,27 @@ rule = (:-) <$> term <*> rhs
 rhs :: Parser [Term]
 rhs = symbol "." *> pure [] <|> symbol ":-" *> commaSep term <* symbol "."
 
+
+--START OF EDIT
+
+{- ORIGINAL
 -- Parse a term
 term :: Parser Term
 term = parens term <|> var <|> list <|> comb
+-}
+
+-- Parse a term
+term :: Parser Term
+term = try (parens term) <|> tuple <|> var <|> list <|> comb
+
+-- Parse a Tuple
+tuple :: Parser Term
+tuple = do
+    args <- parens $ commaSep term
+    whitespaces
+    pure (Comb "" args)
+
+-- END OF EDIT
 
 -- Parse a variable term
 var :: Parser Term
