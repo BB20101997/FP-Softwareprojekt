@@ -43,8 +43,7 @@ module Lib  ( module Lib
         This is the Type of a function
         that applies the substitution for one specific rule
     -}
-    type RuleApplicator =  (SLDParameter -> Goal -> SLDTree) -> SLDParameter ->
-                       Goal -> Maybe (Subst, Goal)
+    type RuleApplicator = SLDParameter -> Goal -> Maybe (Subst, Goal)
 
     {-|
         This is the type of a SLDTree,

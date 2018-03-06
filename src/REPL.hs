@@ -5,13 +5,14 @@ module REPL(readPrompt, initState) where
     import qualified Data.List as List
     import qualified System.IO as IO
 
+    import qualified BaseRule
     import qualified Parser
-    import qualified SLD
     import qualified Rule
-    import Strategy(dfs,bfs)
+    import qualified SLD
     import Lib  ( State, Action, VarIndex, Subst(..)
                 , Prog(..), Term(..), Rule(..), Pretty(..)
                 )
+    import Strategy(dfs, bfs)
 
     -- |The state at the start of the Interface
     initState :: State
@@ -161,7 +162,7 @@ module REPL(readPrompt, initState) where
             sn    = List.sort.List.nub
 
             rules :: [Rule]
-            rules = Rule.buildInToPrologRule Rule.predefinedRules
+            rules = BaseRule.buildInToPrologRule Rule.predefinedRules
 
     -- |Prints the predicates of a program
     printPredicates :: [String] -> IO ()

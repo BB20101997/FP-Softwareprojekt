@@ -2,19 +2,17 @@
 
 {-|
     This Module Provides a few pre-defined BuildInRules
-    and a function for converting Prolog Rules to BuildInRules
+    and their RuleApplicator functions
 -}
-module Rule ( buildInToPrologRule
-            , predefinedRules
-            , baseSubstitution
-            ,(><)
-            ) where
+module Rule (predefinedRules) where
     import qualified Data.Char as Char
     import qualified Text.Read as Read
 
     import qualified Lib
     import qualified Substitution as Subst
     import qualified Unifikation  as Uni
+    import qualified BaseRule
+    import qualified SLD'(sld)
     import Lib  ( BuildInRule, Rule(..), RuleApplicator
                 , Goal(..), Term(..), VarIndex
                 )
@@ -30,27 +28,23 @@ module Rule ( buildInToPrologRule
                         , ("not"    , notSubstitution "not")
                         , ("\\+"    , notSubstitution "\\+")
                         , ("findall", findAllSubstitution)
-                        , (","      , baseSubstitution commaRule)
+                        , (","      , BaseRule.baseSubstitution commaRule)
                         ]
-
-    -- | A Prolog Rule for each predefined BuildInRule
-    buildInToPrologRule :: [BuildInRule] -> [Rule]
-    buildInToPrologRule rules = [Comb x [] :- [] | (x, _) <- rules]
 
     {-|
        The Substitution function for the BuildInRule call
     -}
     callSubstitution :: RuleApplicator
-    callSubstitution _ _ (Goal (Comb "call" (Comb op as:bs):rgs))
+    callSubstitution _ (Goal (Comb "call" (Comb op as:bs):rgs))
         = Just  (Subst.empty, Goal (Comb op (as ++ bs) : rgs))
-    callSubstitution _ _ _
+    callSubstitution _ _
         = Nothing
 
     {-|
        The Substitution function for the BuildInRule is
     -}
     evalSubstitution :: RuleApplicator
-    evalSubstitution _ _ (Goal (Comb "is" [v, term] : rest))
+    evalSubstitution _ (Goal (Comb "is" [v, term] : rest))
         | Just just <- eval term
         =   let
                 result = Uni.unify v $ case just of
@@ -58,7 +52,7 @@ module Rule ( buildInToPrologRule
                     Right a -> Comb (map Char.toLower $ show a) []
             in
                 fmap (\s -> (s, s->>rest)) result
-    evalSubstitution _ _ _
+    evalSubstitution _ _
         =                               Nothing
 
     {-|
@@ -101,42 +95,27 @@ module Rule ( buildInToPrologRule
         evaluated a negation
     -}
     notSubstitution :: String->RuleApplicator
-    notSubstitution opCode sld p (Goal (Comb op goal:rest))
-        | opCode == op, [] <- Lib.usedStrategy p (sld p (Goal goal))
+    notSubstitution opCode p (Goal (Comb op goal:rest))
+        | opCode == op, [] <- Lib.usedStrategy p (SLD'.sld p (Goal goal))
         = Just (Subst.empty, Goal rest)
-    notSubstitution _      _   _ _
+    notSubstitution _      _ _
         = Nothing
 
     {-|
         evaluates a findall predicate
     -}
     findAllSubstitution :: RuleApplicator
-    findAllSubstitution sld p (Goal (Comb "findall" [template, called, bag]:rs))
+    findAllSubstitution p (Goal (Comb "findall" [template, called, bag]:rs))
         = let
-            results    = Lib.usedStrategy p $ sld p (Goal [called])
+            results    = Lib.usedStrategy p $ SLD'.sld p (Goal [called])
             instances  = map (`Subst.apply` template) results
             instances' = newFreeVariables (Lib.usedVars p) instances
             resultBag  = hListToPList instances'
           in case Uni.unify bag resultBag of
             Just s  ->  Just (s, s ->> rs)
             Nothing     ->  Nothing
-    findAllSubstitution _   _ _
+    findAllSubstitution _ _
         =                   Nothing
-
-
-    {-|
-        Converts a Prolog Rule into a RuleApplicator function
-    -}
-    baseSubstitution :: Rule -> RuleApplicator
-    -- |this should never happen
-    baseSubstitution _    _ _ (Goal [])
-        =                       Nothing
-    baseSubstitution rule _ p (Goal (term:rest))
-        = let (pat :- cond) = rule >< Lib.usedVars p in
-            case Uni.unify term pat of
-                Nothing     ->  Nothing
-                Just subst  -> let goal' = subst ->> (cond ++ rest) in
-                                Just (subst, goal')
 
     {-|
         replaces the free variables in a List of Terms with new unique once
@@ -155,5 +134,3 @@ module Rule ( buildInToPrologRule
     hListToPList :: [Term] -> Term
     hListToPList []     = Comb "[]" []
     hListToPList (x:xs) = Comb "." [x, hListToPList xs]
-
-
