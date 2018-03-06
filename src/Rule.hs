@@ -5,7 +5,6 @@
     and their RuleApplicator functions
 -}
 module Rule (predefinedRules) where
-    import qualified Data.Char as Char
     import qualified Text.Read as Read
 
     import qualified Lib
@@ -24,10 +23,16 @@ module Rule (predefinedRules) where
     -- | A Map of of a Name to a BuildInRule
     predefinedRules :: [BuildInRule]
     predefinedRules =   [ ("call"   , callSubstitution)
-                        , ("is"     , evalSubstitution)
+                        , ("is"     , isSubstitution)
                         , ("not"    , notSubstitution "not")
                         , ("\\+"    , notSubstitution "\\+")
                         , ("findall", findAllSubstitution)
+                        , ("=:="    , comparativeSubstitution "=:="  (==))
+                        , ("=\\="   , comparativeSubstitution "=\\=" (/=))
+                        , ("<"      , comparativeSubstitution "<"    (< ))
+                        , (">"      , comparativeSubstitution ">"    (> ))
+                        , (">="     , comparativeSubstitution ">="   (>=))
+                        , ("=<"     , comparativeSubstitution "=<"   (<=))
                         , (","      , BaseRule.baseSubstitution commaRule)
                         ]
 
@@ -43,53 +48,46 @@ module Rule (predefinedRules) where
     {-|
        The Substitution function for the BuildInRule is
     -}
-    evalSubstitution :: RuleApplicator
-    evalSubstitution _ (Goal (Comb "is" [v, term] : rest))
+    isSubstitution :: RuleApplicator
+    isSubstitution _ (Goal (Comb "is" [v, term] : rest))
         | Just just <- eval term
         =   let
-                result = Uni.unify v $ case just of
-                    Left  a -> Comb (                   show a) []
-                    Right a -> Comb (map Char.toLower $ show a) []
+                result = Uni.unify v $ Comb (show just) []
             in
                 fmap (\s -> (s, s->>rest)) result
-    evalSubstitution _ _
+    isSubstitution _ _
         =                               Nothing
 
     {-|
-        evaluates an arithmetic/boolean Prolog Term
+        evaluates an arithmetic Prolog Term
     -}
-    eval :: Term -> Maybe (Either Int Bool)
-    eval (Comb a [])
-        | Just int  <- Read.readMaybe a     = Just $ Left int
-        | Just bool <- Read.readMaybe a     = Just $ Right bool
-    eval (Comb op [eval -> Just a, eval -> Just b])
-        | Left  a' <- a, Left  b' <- b = evalInt  op a' b'
-        | Right a' <- a, Right b' <- b = evalBool op a' b'
-    eval _                             = Nothing
+    eval :: Term -> Maybe Int
+    eval (Comb a [])                                = Read.readMaybe a
+    eval (Comb op [eval -> Just a, eval -> Just b]) = evalInt op a b
+    eval _                                          = Nothing
 
     {-|
         evaluated an arithmetic expression
     -}
-    evalInt :: String -> Int -> Int -> Maybe (Either Int Bool)
-    evalInt op a b | op == "+"             = Just $ Left  $ a + b
-                   | op == "-"             = Just $ Left  $ a - b
-                   | op == "*"             = Just $ Left  $ a * b
-                   | op == "div" && b /= 0 = Just $ Left  $ a `div` b
-                   | op == "<"             = Just $ Right $ a < b
-                   | op == ">"             = Just $ Right $ a > b
-                   | op == "<="            = Just $ Right $ a <= b
-                   | op == ">="            = Just $ Right $ a >= b
-                   | op == "=:="           = Just $ Right $ a == b
-                   | op == "=\\="          = Just $ Right $ a /= b
+    evalInt :: String -> Int -> Int -> Maybe Int
+    evalInt op a b | op == "+"             = Just $ a + b
+                   | op == "-"             = Just $ a - b
+                   | op == "*"             = Just $ a * b
+                   | op == "div" && b /= 0 = Just $ a `div` b
                    |otherwise              = Nothing
 
     {-|
-        evaluates a boolean comparison
+        Takes an operator name and an operator function
     -}
-    evalBool :: String -> Bool -> Bool -> Maybe(Either Int Bool)
-    evalBool op a b | op == "=:="  = Just $ Right $ a == b
-                    | op == "=\\=" = Just $ Right $ a /= b
-                    | otherwise    = Nothing
+    comparativeSubstitution :: String -> (Int -> Int -> Bool) -> RuleApplicator
+    comparativeSubstitution opC op _ (Goal (Comb opC' [a, b]:rest))
+        | opC == opC'
+        , Just x <- eval a
+        , Just y <- eval b
+        , op x y
+        = Just (Subst.empty,Goal rest)
+    comparativeSubstitution _   _ _ _
+        = Nothing
 
     {-|
         evaluated a negation
