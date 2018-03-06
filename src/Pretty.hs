@@ -30,6 +30,10 @@ module Pretty where
             = '[':prettyWithVars v x ++ ", " ++ tail (prettyWithVars v r)
         prettyWithVars v (Comb "." [x, r])
             = '[':prettyWithVars v x ++ '|': prettyWithVars v r ++ "]"
+        prettyWithVars v (Comb "," [x, r@(Comb "," [_, _])])
+          = '(':prettyWithVars v x ++ ", " ++ tail (prettyWithVars v r)
+        prettyWithVars v (Comb "," [x, y])
+          = '(':prettyWithVars v x ++ ", " ++ prettyWithVars v y ++ ")"
         prettyWithVars _ (Comb y [])
             = y
         prettyWithVars v (Comb y [x])
