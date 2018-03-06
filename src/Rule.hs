@@ -26,7 +26,7 @@ module Rule ( buildInToPrologRule
                         , ("not"    , notSubstitution "not")
                         , ("\\+"    , notSubstitution "\\+")
                         , ("findall", findAllSubstitution)
-                        , ("",tupleSubstitution)
+                        , (","      , tupleSubstitution)
                         ]
 
     -- | A Prolog Rule for each predefined BuildInRule

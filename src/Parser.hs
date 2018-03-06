@@ -78,7 +78,7 @@ commaTerm :: Parser Term
 commaTerm = do
     args@(_:_) <- commaSep term
     whitespaces
-    pure $ foldr1 (\x xs ->Comb  "," [x,xs]) args
+    pure $ foldr1 (\x xs -> Comb  "," [x, xs]) args
 
 -- END OF EDIT
 
