@@ -43,7 +43,7 @@ module SLD(sld) where
             substitute rule@(Comb op _ :- _)
                 = let
                     -- in case it is not build in create a build in rule
-                    rule' = baseSubstitution rule
+                    rule' = Rule.baseSubstitution rule
                     -- find a build in function or use rule'
                     func  = Maybe.fromMaybe rule' (lookup op preRules)
                     -- apply ruleSubstitution
@@ -57,16 +57,3 @@ module SLD(sld) where
                         in
                             Just (subst, sld' param' goal')
 
-    {-|
-        Converts a Prolog Rule into a RuleApplicator function
-    -}
-    baseSubstitution :: Rule -> RuleApplicator
-    -- |this should never happen
-    baseSubstitution _    _ _ (Goal [])
-        =                       Nothing
-    baseSubstitution rule _ p (Goal (term:rest))
-        = let (pat :- cond) = rule >< usedVars p in
-            case Uni.unify term pat of
-                Nothing     ->  Nothing
-                Just subst  -> let goal' = subst ->> (cond ++ rest) in
-                                Just (subst, goal')

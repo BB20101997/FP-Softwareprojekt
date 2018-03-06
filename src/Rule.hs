@@ -6,6 +6,7 @@
 -}
 module Rule ( buildInToPrologRule
             , predefinedRules
+            , baseSubstitution
             ,(><)
             ) where
     import qualified Data.Char as Char
@@ -19,6 +20,9 @@ module Rule ( buildInToPrologRule
                 )
     import Substitution((->>), (><))
 
+    commaRule::Rule
+    commaRule = Lib.Comb "," [Var 0,Var 1] :- [Var 0,Var 1]
+
     -- | A Map of of a Name to a BuildInRule
     predefinedRules :: [BuildInRule]
     predefinedRules =   [ ("call"   , callSubstitution)
@@ -26,7 +30,7 @@ module Rule ( buildInToPrologRule
                         , ("not"    , notSubstitution "not")
                         , ("\\+"    , notSubstitution "\\+")
                         , ("findall", findAllSubstitution)
-                        , (","      , tupleSubstitution)
+                        , (","      , baseSubstitution commaRule)
                         ]
 
     -- | A Prolog Rule for each predefined BuildInRule
@@ -119,11 +123,20 @@ module Rule ( buildInToPrologRule
     findAllSubstitution _   _ _
         =                   Nothing
 
-    tupleSubstitution :: RuleApplicator
-    tupleSubstitution _ _ (Goal (Comb "," terms@[_, _] : rest))
-        = Just (Subst.empty, Goal $ terms ++ rest)
-    tupleSubstitution _ _ _
-        = Nothing
+
+    {-|
+        Converts a Prolog Rule into a RuleApplicator function
+    -}
+    baseSubstitution :: Rule -> RuleApplicator
+    -- |this should never happen
+    baseSubstitution _    _ _ (Goal [])
+        =                       Nothing
+    baseSubstitution rule _ p (Goal (term:rest))
+        = let (pat :- cond) = rule >< Lib.usedVars p in
+            case Uni.unify term pat of
+                Nothing     ->  Nothing
+                Just subst  -> let goal' = subst ->> (cond ++ rest) in
+                                Just (subst, goal')
 
     {-|
         replaces the free variables in a List of Terms with new unique once
