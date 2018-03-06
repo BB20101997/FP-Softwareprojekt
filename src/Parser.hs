@@ -71,14 +71,14 @@ term = parens term <|> var <|> list <|> comb
 
 -- Parse a term
 term :: Parser Term
-term = try (parens term) <|> tuple <|> var <|> list <|> comb
+term = parens commaTerm <|> var <|> list <|> comb
 
 -- Parse a Tuple
-tuple :: Parser Term
-tuple = do
-    args <- parens $ commaSep term
+commaTerm :: Parser Term
+commaTerm = do
+    args@(_:_) <- commaSep term
     whitespaces
-    pure (Comb "" args)
+    pure $ foldr1 (\x xs ->Comb  "," [x,xs]) args
 
 -- END OF EDIT
 

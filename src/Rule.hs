@@ -120,7 +120,7 @@ module Rule ( buildInToPrologRule
         =                   Nothing
 
     tupleSubstitution :: RuleApplicator
-    tupleSubstitution _ _ (Goal (Comb "" terms : rest))
+    tupleSubstitution _ _ (Goal (Comb "," terms@[_, _] : rest))
         = Just (Subst.empty, Goal $ terms ++ rest)
     tupleSubstitution _ _ _
         = Nothing
