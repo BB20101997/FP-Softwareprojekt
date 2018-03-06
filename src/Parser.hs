@@ -1,8 +1,10 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+
 module Parser
   ( Parse(..), parseFile
   ) where
 
-import System.IO.Error (catchIOError)
+import Control.Exception (SomeException, catch)
 
 import Text.Parsec hiding (parse)
 
