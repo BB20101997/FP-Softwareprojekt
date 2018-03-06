@@ -93,8 +93,8 @@ module Rule (predefinedRules) where
         evaluated a negation
     -}
     notSubstitution :: String->RuleApplicator
-    notSubstitution opCode p (Goal (Comb op goal:rest))
-        | opCode == op, [] <- Lib.usedStrategy p (SLD'.sld p (Goal goal))
+    notSubstitution opCode p (Goal (Comb op [goal]:rest))
+        | opCode == op, [] <- Lib.usedStrategy p (SLD'.sld p (Goal [goal]))
         = Just (Subst.empty, Goal rest)
     notSubstitution _      _ _
         = Nothing
