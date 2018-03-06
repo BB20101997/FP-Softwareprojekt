@@ -27,10 +27,8 @@ instance Parse Prog where
 
 -- Try to parse a file
 parseFile :: Parse a => FilePath -> IO (Either String a)
-parseFile fn =
-  let f = reverse . dropWhile (== ' ')
-  in catch (readFile (f (f fn)) >>= return . parse)
-       (\ (_ :: SomeException) -> return (Left "Could not read file."))
+parseFile fn = flip catchIOError (const $ return $ Left "Could not read file.")
+  (readFile fn >>= return . parse)
 
 -- INTERNAL
 
@@ -56,19 +54,11 @@ prog = Prog <$> (whitespaces *> many rule <* eof)
 
 -- Parse a rule
 rule :: Parser Rule
-rule = (:-) <$> lhs <*> rhs
-
--- Parse the left hand side of a rule
-lhs :: Parser Term
-lhs = try (parens lhs) <|> comb
+rule = (:-) <$> term <*> rhs
 
 -- Parse the right hand side of a rule
 rhs :: Parser [Term]
 rhs = symbol "." *> pure [] <|> symbol ":-" *> commaSep term <* symbol "."
-
--- Parse a literal
-lit :: Parser Term
-lit = try (parens lit) <|> comb
 
 
 --START OF EDIT
@@ -115,8 +105,7 @@ list :: Parser Term
 list = symbol "[" *> whitespaces *> do
   let nil = Comb "[]" []
       cons x xs = Comb "." [x, xs]
-  try (flip (foldr cons) <$> term `sepBy1` symbol "," <* symbol "|" <*>
-        term <* symbol "]") <|>
+  try (cons <$> term <* whitespaces <* symbol "|" <*> term <* symbol "]") <|>
     foldr cons nil <$> commaSep term <* symbol "]"
 
 -- Parse a combination term
@@ -130,7 +119,7 @@ comb = do
 -- Parse an atom
 atom :: Parser String
 atom = (:) <$> lower <*> many (letter <|> digit <|> char '_') <|>
-  number <|> (many1 (oneOf "+-*/<=>'\\:.?@#$&^~") <?> "symbol")
+  number <|> many1 (oneOf "+-*/<=>'\\:.?@#$&^~")
 
 -- Parse a number
 number :: Parser String
