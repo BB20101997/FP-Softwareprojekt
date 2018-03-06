@@ -1,10 +1,8 @@
-{-# LANGUAGE ScopedTypeVariables #-}
-
 module Parser
   ( Parse(..), parseFile
   ) where
 
-import Control.Exception (SomeException, catch)
+import System.IO.Error (catchIOError)
 
 import Text.Parsec hiding (parse)
 
@@ -50,8 +48,7 @@ withVars = flip (<*>) (map (\(x, y) -> (y, x)) <$> getState) . ((,) <$>)
 
 -- Parse a goal
 goal :: Parser Goal
-goal = Goal <$> (whitespaces *>
-  (try ((: []) <$> var <* symbol ".") <|> commaSep lit <* symbol ".") <* eof)
+goal = Goal <$> (whitespaces *> commaSep term <* symbol "." <* eof)
 
 -- Parse a program
 prog :: Parser Prog
@@ -67,7 +64,7 @@ lhs = try (parens lhs) <|> comb
 
 -- Parse the right hand side of a rule
 rhs :: Parser [Term]
-rhs = symbol "." *> pure [] <|> symbol ":-" *> commaSep lit <* symbol "."
+rhs = symbol "." *> pure [] <|> symbol ":-" *> commaSep term <* symbol "."
 
 -- Parse a literal
 lit :: Parser Term
