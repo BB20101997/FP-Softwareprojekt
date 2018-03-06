@@ -7,11 +7,9 @@ module SLD(sld) where
 
     import qualified Lib
     import qualified Rule
-    import qualified Unifikation  as Uni
     import Lib ( Rule(..), Goal(..), SLDTree(..), SLDParameter(..)
-               , Prog(..), Term(..), Strategy, Subst, RuleApplicator
+               , Prog(..), Term(..), Strategy, Subst
                )
-    import Substitution((->>), (><))
 
     {-|
         Using the FIRST selection strategy given a Program and a Goal
