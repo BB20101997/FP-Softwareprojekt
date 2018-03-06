@@ -12,7 +12,7 @@ module BaseRule(baseSubstitution, buildInToPrologRule) where
         Converts a Prolog Rule into a RuleApplicator function
     -}
     baseSubstitution :: Rule -> RuleApplicator
-    -- |this should never happen
+    -- this should never happen
     baseSubstitution _    _ (Goal [])
         =                       Nothing
     baseSubstitution rule p (Goal (term:rest))
