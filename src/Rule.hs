@@ -113,10 +113,10 @@ module Rule ( buildInToPrologRule
     findAllSubstitution :: RuleApplicator
     findAllSubstitution sld p (Goal (Comb "findall" [template, called, bag]:rs))
         = let
-            results = Lib.usedStrategy p $ sld p (Goal [called])
-            instances = map (`Subst.apply` template) results
+            results    = Lib.usedStrategy p $ sld p (Goal [called])
+            instances  = map (`Subst.apply` template) results
             instances' = newFreeVariables (Lib.usedVars p) instances
-            resultBag = hListToPList instances'
+            resultBag  = hListToPList instances'
           in case Uni.unify bag resultBag of
             Just s  ->  Just (s, s ->> rs)
             Nothing     ->  Nothing
