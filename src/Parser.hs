@@ -1,8 +1,10 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+
 module Parser
   ( Parse(..), parseFile
   ) where
 
-import System.IO.Error (catchIOError)
+import Control.Exception (SomeException, catch)
 
 import Text.Parsec hiding (parse)
 
@@ -27,8 +29,10 @@ instance Parse Prog where
 
 -- Try to parse a file
 parseFile :: Parse a => FilePath -> IO (Either String a)
-parseFile fn = flip catchIOError (const $ return $ Left "Could not read file.")
-  (readFile fn >>= return . parse)
+parseFile fn =
+  let f = reverse . dropWhile (== ' ')
+  in catch (readFile (f (f fn)) >>= return . parse)
+       (\ (_ :: SomeException) -> return (Left "Could not read file."))
 
 -- INTERNAL
 
@@ -46,7 +50,8 @@ withVars = flip (<*>) (map (\(x, y) -> (y, x)) <$> getState) . ((,) <$>)
 
 -- Parse a goal
 goal :: Parser Goal
-goal = Goal <$> (whitespaces *> commaSep term <* symbol "." <* eof)
+goal = Goal <$> (whitespaces *>
+  (try ((: []) <$> var <* symbol ".") <|> commaSep lit <* symbol ".") <* eof)
 
 -- Parse a program
 prog :: Parser Prog
@@ -54,11 +59,19 @@ prog = Prog <$> (whitespaces *> many rule <* eof)
 
 -- Parse a rule
 rule :: Parser Rule
-rule = (:-) <$> term <*> rhs
+rule = (:-) <$> lhs <*> rhs
+
+-- Parse the left hand side of a rule
+lhs :: Parser Term
+lhs = try (parens lhs) <|> comb
 
 -- Parse the right hand side of a rule
 rhs :: Parser [Term]
-rhs = symbol "." *> pure [] <|> symbol ":-" *> commaSep term <* symbol "."
+rhs = symbol "." *> pure [] <|> symbol ":-" *> commaSep lit <* symbol "."
+
+-- Parse a literal
+lit :: Parser Term
+lit = try (parens lit) <|> comb
 
 -- Parse a term
 term :: Parser Term
@@ -87,7 +100,8 @@ list :: Parser Term
 list = symbol "[" *> whitespaces *> do
   let nil = Comb "[]" []
       cons x xs = Comb "." [x, xs]
-  try (cons <$> term <* whitespaces <* symbol "|" <*> term <* symbol "]") <|>
+  try (flip (foldr cons) <$> term `sepBy1` symbol "," <* symbol "|" <*>
+        term <* symbol "]") <|>
     foldr cons nil <$> commaSep term <* symbol "]"
 
 -- Parse a combination term
@@ -101,7 +115,7 @@ comb = do
 -- Parse an atom
 atom :: Parser String
 atom = (:) <$> lower <*> many (letter <|> digit <|> char '_') <|>
-  number <|> many1 (oneOf "+-*/<=>'\\:.?@#$&^~")
+  number <|> (many1 (oneOf "+-*/<=>'\\:.?@#$&^~") <?> "symbol")
 
 -- Parse a number
 number :: Parser String
