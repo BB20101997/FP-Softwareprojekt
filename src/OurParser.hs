@@ -1,6 +1,6 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Parser
+module OurParser
   ( Parse(..), parseFile
   ) where
 
