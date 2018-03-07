@@ -16,11 +16,14 @@ module BaseRule(baseSubstitution, buildInToPrologRule) where
     baseSubstitution _    _ (Goal [])
         =                       Nothing
     baseSubstitution rule p (Goal (term:rest))
+        | (Comb _ _) <- term
         = let (pat :- cond) = rule >< Lib.usedVars p in
             case Uni.unify term pat of
                 Nothing     ->  Nothing
                 Just subst  -> let goal' = subst ->> (cond ++ rest) in
                                 Just (subst, goal')
+        | (Var _) <- term
+        = Nothing  -- This would throw an error in SWI-Prolog
 
     -- | A Prolog Rule for each predefined BuildInRule
     buildInToPrologRule :: [BuildInRule] -> [Rule]
