@@ -6,17 +6,23 @@ module REPL(readPrompt, initState) where
     import qualified System.IO as IO
 
     import qualified BaseRule
-    import qualified OurParser as Parser
+    import qualified OurParser
+    import qualified Parser
     import qualified Rule
     import qualified SLD
-    import Lib  ( State, Action, VarIndex, Subst(..)
+    import Lib  ( State(..), Action, VarIndex, Subst(..)
                 , Prog(..), Term(..), Rule(..), Pretty(..)
+                , strategy, program, fileParser, goalParser
                 )
     import Strategy(dfs, bfs)
 
     -- |The state at the start of the Interface
     initState :: State
-    initState = (dfs, Prog [])
+    initState = State   { strategy = dfs
+                        , program = Prog []
+                        , fileParser = OurParser.parseFile
+                        , goalParser = OurParser.parseWithVars
+                        }
 
     -- |Asks the user for an input for the prolog-interface
     readPrompt :: State -> IO ()
@@ -31,11 +37,12 @@ module REPL(readPrompt, initState) where
         for the main prompt
     -}
     menuEntries::[(String,Action)]
-    menuEntries =   [(":help",printHelp)
-                    ,(":quit",exit)
-                    ,(":info",printInfo)
-                    ,(":set",setSearch)
-                    ,(":load",loadFile)
+    menuEntries =   [(":help"   ,printHelp)
+                    ,(":quit"   ,exit)
+                    ,(":info"   ,printInfo)
+                    ,(":set"    ,setSearch)
+                    ,(":load"   ,loadFile)
+                    ,(":parser" ,setParser)
                     ]
 
     -- |Interprets the input from the user of the interface
@@ -59,15 +66,15 @@ module REPL(readPrompt, initState) where
                 it prints an error message
     -}
     parseGoalAndEvalGoal :: Action
-    parseGoalAndEvalGoal state@(strategy, program) input
-        = case Parser.parseWithVars input of
+    parseGoalAndEvalGoal state input
+        = case goalParser state input of
             -- Print parser error message
             Left err           -> putStrLn err >> readPrompt state
             -- Parsing successful evaluate goal
             Right (goal, vars) ->
                 let
-                    sldTree   = SLD.sld strategy program goal
-                    solutions = strategy sldTree
+                    sldTree   = SLD.sld  (strategy state) (program state) goal
+                    solutions = strategy state sldTree
                 in do
                     -- putStrLn $ prettyWithVars vars sldTree
                     outputSolutions vars solutions
@@ -113,23 +120,51 @@ module REPL(readPrompt, initState) where
                         promptFurtherSolutions vars rest
 
     {-|
+        Changes the Parser that is used
+    -}
+    setParser :: Action
+    setParser state newParser
+        | newParser == "provided"
+        = do
+            putStrLn "Now using the provided Parser"
+            readPrompt state    { fileParser = Parser.parseFile
+                                , goalParser = Parser.parseWithVars
+                                }
+        | newParser == "our"
+        = do
+            putStrLn "Now using our modified Parser"
+            readPrompt state    { fileParser = OurParser.parseFile
+                                , goalParser = OurParser.parseWithVars
+                                }
+        | otherwise
+        = do
+            putStrLn "Invalid Parser requested keeping previouse one!"
+            readPrompt state
+
+    {-|
         Sets a new Search Strategy
         If the input is neither dfs nor bfs the current strategy will persist
     -}
     setSearch :: Action
-    setSearch (old, program) newStrategy
+    setSearch state newStrategy
         | newStrategy == "dfs"
-        = putStrLn "Strategy set to depth-first"    >> readPrompt (dfs, program)
+        = do
+            putStrLn "Strategy set to depth-first"
+            readPrompt state{strategy = dfs}
         | newStrategy == "bfs"
-        = putStrLn "Strategy set to breadth-first"  >> readPrompt (bfs, program)
+        = do
+            putStrLn "Strategy set to breadth-first"
+            readPrompt state{strategy = bfs}
         | otherwise
-        = putStrLn "Error strategy stays unchanged" >> readPrompt (old, program)
+        = do
+            putStrLn "Error strategy stays unchanged"
+            readPrompt state
 
     -- |Loads a prolog file
     loadFile :: Action
     loadFile state filePath = do
                                 putStrLn ("Loading file " ++ filePath)
-                                parseResult <- Parser.parseFile filePath
+                                parseResult <- fileParser state filePath
                                 newState <- fileReadingResult state parseResult
                                 readPrompt newState
     {-|
@@ -141,10 +176,10 @@ module REPL(readPrompt, initState) where
         = do
             putStrLn ("Couldn't read file, the following error occurred:" ++ e)
             return state
-    fileReadingResult (strategy, _) (Right prog)
+    fileReadingResult state (Right prog)
         = do
             putStrLn "File read"
-            return (strategy, prog)
+            return state{program = prog}
 
     -- |Closes the prolog interface
     exit :: Action
@@ -152,7 +187,7 @@ module REPL(readPrompt, initState) where
 
     -- |Shows all available predicates
     printInfo :: Action
-    printInfo state@(_, Prog prog) _
+    printInfo state@State{program = Prog prog} _
         = do
             putStrLn "Buildin Predicates always show with Zero Arguments!"
             printPredicates(sn . map showPredicates $ prog ++ rules)
@@ -188,4 +223,6 @@ module REPL(readPrompt, initState) where
                 " :load <file> Loads the specified file. \n" ++
                 " :quit Exits the interactive environment. \n" ++
                 " :set <strat> Sets the specified search strategy" ++
-                " where <strat> is one of ' dfs ' or ' bfs ' ."
+                " where <strat> is one of ' dfs ' or ' bfs ' .\n" ++
+                " :parser <parser> Sets the parser to be used" ++
+                " where <parser> is one of ' provided ' or ' our ' ."

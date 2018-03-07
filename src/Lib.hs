@@ -15,7 +15,13 @@ module Lib  ( module Lib
     -- == REPL Types
 
     -- | This Type is used for the current internal state of the REPL
-    type State = (Strategy, Prog)
+    data State
+     = State
+        { strategy      :: Strategy
+        , program       :: Prog
+        , fileParser    :: FilePath -> IO (Either String Prog)
+        , goalParser    :: String -> Either String (Goal, [(VarIndex, String)])
+        }
 
     {-|
         This is the Type of the REPL's main prompt actions
