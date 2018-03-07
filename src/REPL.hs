@@ -6,7 +6,7 @@ module REPL(readPrompt, initState) where
     import qualified System.IO as IO
 
     import qualified BaseRule
-    import qualified OurParser
+    import qualified OurParser as Parser
     import qualified Rule
     import qualified SLD
     import Lib  ( State, Action, VarIndex, Subst(..)
