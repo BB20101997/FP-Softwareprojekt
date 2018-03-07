@@ -17,16 +17,21 @@ module Rule (predefinedRules) where
                 )
     import Substitution((->>), (><))
 
-    commaRule::Rule
-    commaRule = Lib.Comb "," [Var 0,Var 1] :- [Var 0,Var 1]
+    commaRule :: Rule
+    commaRule = Lib.Comb "," [Var 0, Var 1] :- [Var 0, Var 1]
+
+    semicolonRule1 :: Rule
+    semicolonRule1 = Lib.Comb ";" [Var 0, Var 1] :- [Var 0]
+    semicolonRule2 :: Rule
+    semicolonRule2 = Lib.Comb ";" [Var 0, Var 1] :- [Var 1]
 
     -- | A Map of of a Name to a BuildInRule
     predefinedRules :: [BuildInRule]
     predefinedRules =   [ ("call"   , callSubstitution)
                         , ("is"     , isSubstitution)
+                        , ("findall", findAllSubstitution)
                         , ("not"    , notSubstitution "not")
                         , ("\\+"    , notSubstitution "\\+")
-                        , ("findall", findAllSubstitution)
                         , ("=:="    , comparativeSubstitution "=:="  (==))
                         , ("=\\="   , comparativeSubstitution "=\\=" (/=))
                         , ("<"      , comparativeSubstitution "<"    (< ))
@@ -34,6 +39,8 @@ module Rule (predefinedRules) where
                         , (">="     , comparativeSubstitution ">="   (>=))
                         , ("=<"     , comparativeSubstitution "=<"   (<=))
                         , (","      , BaseRule.baseSubstitution commaRule)
+                        , (";"      , BaseRule.baseSubstitution semicolonRule1)
+                        , ("2;"     , BaseRule.baseSubstitution semicolonRule2)
                         ]
 
     {-|

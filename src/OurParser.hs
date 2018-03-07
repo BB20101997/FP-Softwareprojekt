@@ -6,6 +6,7 @@ module OurParser
 
 import Control.Exception (SomeException, catch)
 
+import Data.Maybe as Maybe
 import Text.Parsec hiding (parse)
 
 import Type
@@ -50,7 +51,7 @@ withVars = flip (<*>) (map (\(x, y) -> (y, x)) <$> getState) . ((,) <$>)
 
 -- Parse a goal
 goal :: Parser Goal
-goal = Goal <$> (whitespaces *> commaSep term <* symbol "." <* eof)
+goal = Goal <$> (whitespaces *> ((:[]) <$> simTerm) <* symbol "." <* eof)
 
 -- Parse a program
 prog :: Parser Prog
@@ -66,33 +67,24 @@ lhs = try (parens lhs) <|> comb
 
 -- Parse the right hand side of a rule
 rhs :: Parser [Term]
-rhs = symbol "." *> pure [] <|> symbol ":-" *> commaSep term <* symbol "."
-
--- Parse a literal
-lit :: Parser Term
-lit = try (parens lit) <|> comb
+rhs = symbol "." *> pure [] <|> symbol ":-" *> ((:[])  <$> simTerm) <* symbol "."
 
 
---START OF EDIT
-
-{- ORIGINAL
--- Parse a term
-term :: Parser Term
-term = parens term <|> var <|> list <|> comb
--}
-
--- Parse a term
-term :: Parser Term
-term = parens commaTerm <|> var <|> list <|> comb
+simTerm :: Parser Term
+simTerm = do
+    args@(_:_) <- comTerm `sepBy` symbol ";"
+    whitespaces
+    pure $ foldr1 (\x xs -> Comb ";" [x,xs]) args
 
 -- Parse a Tuple
-commaTerm :: Parser Term
-commaTerm = do
-    args@(_:_) <- commaSep term
+comTerm :: Parser Term
+comTerm = do
+    args@(_:_) <- baseTerm `sepBy` symbol ","
     whitespaces
     pure $ foldr1 (\x xs -> Comb  "," [x, xs]) args
 
--- END OF EDIT
+baseTerm :: Parser Term
+baseTerm = list <|> var <|> comb <|> parens simTerm
 
 -- Parse a variable term
 var :: Parser Term
@@ -117,17 +109,17 @@ list :: Parser Term
 list = symbol "[" *> whitespaces *> do
   let nil = Comb "[]" []
       cons x xs = Comb "." [x, xs]
-  try (flip (foldr cons) <$> term `sepBy1` symbol "," <* symbol "|" <*>
-        term <* symbol "]") <|>
-    foldr cons nil <$> commaSep term <* symbol "]"
+  try (flip (foldr cons) <$> baseTerm `sepBy1` symbol "," <* symbol "|" <*>
+        baseTerm <* symbol "]") <|>
+    foldr cons nil <$> commaSep baseTerm <* symbol "]"
 
 -- Parse a combination term
 comb :: Parser Term
 comb = do
-  f <- atom
-  args <- maybe [] id <$> optionMaybe (parens (commaSep term))
-  whitespaces
-  pure (Comb f args)
+    f <- atom
+    args <- Maybe.fromMaybe [] <$> optionMaybe (parens (commaSep baseTerm))
+    whitespaces
+    pure (Comb f args)
 
 -- Parse an atom
 atom :: Parser String
