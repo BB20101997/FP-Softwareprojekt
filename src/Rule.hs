@@ -1,5 +1,3 @@
-{-# LANGUAGE ViewPatterns #-}
-
 {-|
     This Module Provides a few pre-defined BuildInRules
     and their RuleApplicator functions
@@ -69,9 +67,11 @@ module Rule (predefinedRules) where
         evaluates an arithmetic Prolog Term
     -}
     eval :: Term -> Maybe Int
-    eval (Comb a [])                                = Read.readMaybe a
-    eval (Comb op [eval -> Just a, eval -> Just b]) = evalInt op a b
-    eval _                                          = Nothing
+    eval (Comb a [])        = Read.readMaybe a
+    eval (Comb op [a, b])   | Just a' <- eval a
+                            , Just b' <- eval b
+                            = evalInt op a' b'
+    eval _                  = Nothing
 
     {-|
         evaluated an arithmetic expression

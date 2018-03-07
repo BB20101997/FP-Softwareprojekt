@@ -9,5 +9,4 @@ or(true,false,true).
 or(false,true,true).
 or(false,false,false).
 test(X):-boolean(X).
-test(X):- X.
 =(X,X).
