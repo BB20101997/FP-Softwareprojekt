@@ -97,9 +97,11 @@ module Lib  ( module Lib
 
     -- |To not edit Type we just implemented it ourselves
     instance  (Eq Term) where
-        (==) (Var i)    (Var i2)               = i == i2
-        (==) (Comb s r) (Comb s2 r2) | s == s2 = all (uncurry (==)) (zip r r2)
-        (==) _          _                      = False
+        (==) (Var i)    (Var i2)     = i == i2
+        (==) (Comb s r) (Comb s2 r2) | s == s2
+                                     , length r == length r2
+                                     = all (uncurry (==)) (zip r r2)
+        (==) _          _            = False
 
 -- == Useful Stuff
 

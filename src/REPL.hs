@@ -76,6 +76,8 @@ module REPL(readPrompt, initState) where
                     sldTree   = SLD.sld  (strategy state) (program state) goal
                     solutions = strategy state sldTree
                 in do
+                    -- print goal
+                    -- print $ program state
                     -- putStrLn $ prettyWithVars vars sldTree
                     outputSolutions vars solutions
                     readPrompt state
