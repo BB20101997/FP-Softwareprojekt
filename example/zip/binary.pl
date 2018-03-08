@@ -12,7 +12,7 @@ addP(o(M), o(N), o(K)) :- addP(M, N, K).
 addP(o(M), i(N), i(K)) :- addP(M, N, K).
 addP(i(M), i, o(K)) :- addP(i, M, K).
 addP(i(M), o(N), i(K)) :- addP(M, N, K).
-addP(i(M), i((N), o(K)) :- addP(i, M, J), addP(J, N, K).
+addP(i(M), i((N), o(K))) :- addP(i, M, J), addP(J, N, K).
 
 % Subtracting the second binary numbers from the first yields the third parameter
 sub(M, N, K) :- add(N, K, M).
