@@ -43,7 +43,7 @@ module Lib  ( module Lib
     {-|
         The Type for Build in Prolog Predicates
     -}
-    type BuildInRule = (String, RuleApplicator)
+    type BuildInRule = (RuleApplicator, Rule)
 
     {-|
         This is the Type of a function

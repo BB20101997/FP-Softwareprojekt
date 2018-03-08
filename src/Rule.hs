@@ -20,26 +20,63 @@ module Rule (predefinedRules) where
 
     semicolonRule1 :: Rule
     semicolonRule1 = Lib.Comb ";" [Var 0, Var 1] :- [Var 0]
+
     semicolonRule2 :: Rule
     semicolonRule2 = Lib.Comb ";" [Var 0, Var 1] :- [Var 1]
 
     -- | A Map of of a Name to a BuildInRule
     predefinedRules :: [BuildInRule]
-    predefinedRules =   [ ("call"   , callSubstitution)
-                        , ("is"     , isSubstitution)
-                        , ("findall", findAllSubstitution)
-                        , ("not"    , notSubstitution "not")
-                        , ("\\+"    , notSubstitution "\\+")
-                        , ("=:="    , comparativeSubstitution "=:="  (==))
-                        , ("=\\="   , comparativeSubstitution "=\\=" (/=))
-                        , ("<"      , comparativeSubstitution "<"    (< ))
-                        , (">"      , comparativeSubstitution ">"    (> ))
-                        , (">="     , comparativeSubstitution ">="   (>=))
-                        , ("=<"     , comparativeSubstitution "=<"   (<=))
-                        , (","      , BaseRule.baseSubstitution commaRule)
-                        , (";"      , BaseRule.baseSubstitution semicolonRule1)
-                        , ("2;"     , BaseRule.baseSubstitution semicolonRule2)
-                        ]
+    predefinedRules
+        =   [   ( callSubstitution
+                , generatePrologRule "call"    1
+                )
+            ,   ( isSubstitution
+                , generatePrologRule "is"      2
+                )
+            ,   ( findAllSubstitution
+                , generatePrologRule "findall" 3
+                )
+            ,   ( notSubstitution "not"
+                , generatePrologRule "not"     1
+                )
+            ,   ( notSubstitution "\\+"
+                , generatePrologRule "\\+"     1
+                )
+            ,   ( comparativeSubstitution "=:="  (==)
+                , generatePrologRule "=:="     2
+                )
+            ,   ( comparativeSubstitution "=\\=" (/=)
+                , generatePrologRule "=\\="    2
+                )
+            ,   ( comparativeSubstitution "<"    (< )
+                , generatePrologRule "<"       2
+                )
+            ,   ( comparativeSubstitution ">"    (> )
+                , generatePrologRule ">"       2
+                )
+            ,   ( comparativeSubstitution ">="   (>=)
+                , generatePrologRule ">="      2
+                )
+            ,   ( comparativeSubstitution "=<"   (<=)
+                , generatePrologRule "=<"      2
+                )
+            ,   ( BaseRule.baseSubstitution commaRule
+                , commaRule
+                )
+            ,   ( BaseRule.baseSubstitution semicolonRule1
+                , semicolonRule1
+                )
+            ,   ( BaseRule.baseSubstitution semicolonRule2
+                , semicolonRule2
+                )
+            ]
+
+    {-|
+        generates a Stub Prolog Rule for the given name and Parameter Count
+    -}
+    generatePrologRule :: String -> Int -> Rule
+    generatePrologRule name paramCount
+        = Lib.Comb name  [Var r | r <- [1 .. paramCount]] :- []
 
     {-|
        The Substitution function for the BuildInRule call

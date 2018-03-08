@@ -5,7 +5,6 @@ module REPL(readPrompt, initState) where
     import qualified Data.List as List
     import qualified System.IO as IO
 
-    import qualified BaseRule
     import qualified OurParser
     import qualified Parser
     import qualified Rule
@@ -199,7 +198,7 @@ module REPL(readPrompt, initState) where
             sn    = List.sort.List.nub
 
             rules :: [Rule]
-            rules = BaseRule.buildInToPrologRule Rule.predefinedRules
+            rules = let (_, r) = unzip Rule.predefinedRules in r
 
     -- |Prints the predicates of a program
     printPredicates :: [String] -> IO ()
