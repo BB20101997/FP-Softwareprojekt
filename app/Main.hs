@@ -6,7 +6,4 @@ module Main where
     main = do
             putStrLn "Welcome to Simple Prolog!"
             putStrLn "Type \":help\" for help."
-            putStrLn "Default search is depth-first."
-            putStrLn ("Default Parser is OurParser that"++
-             " adds parsing for tuple and ';'.")
             REPL.readPrompt REPL.initState
