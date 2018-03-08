@@ -191,7 +191,7 @@ module REPL(readPrompt, initState) where
     printInfo :: Action
     printInfo state@State{program = Prog prog} _
         = do
-            putStrLn "Buildin Predicates always show with Zero Arguments!"
+            putStrLn "Call has at least 1 argument, but can have more than 1!"
             printPredicates(sn . map showPredicates $ prog ++ rules)
             readPrompt state
           where
