@@ -9,27 +9,29 @@ module Strategy(dfs, bfs) where
     import qualified Substitution as Subst
     import Lib(Strategy, Subst, SLDTree(..))
 
-    -- | applies a Strategy to a list of resolutions
-    mapStrategy :: Strategy -> [(Subst, SLDTree)] -> [[Subst]]
-    mapStrategy s = map mapFunction
-      where
-        -- | applies a Strategy to a single resolution
-        mapFunction :: (Subst, SLDTree) -> [Subst]
-        mapFunction (substitution, Success)
-            = [substitution]
-        mapFunction  xs
-            = uncurry map $ Bi.bimap (flip Subst.compose) s xs
+    -- | applies a Strategy to a single resolution
+    dfsMap :: (Subst, SLDTree) -> [Subst]
+    dfsMap (substitution, Success)
+        = [substitution]
+    dfsMap  xs
+        = uncurry map $ Bi.bimap (flip Subst.compose) dfs xs
 
     -- |Performs a depth-first-search on an SLDTree searching for solutions
     dfs :: Strategy
     dfs (SLDTree resolutions)
-        = concat                  $ mapStrategy dfs resolutions
+        = concatMap dfsMap resolutions
     dfs Success
         = [Subst.empty]
 
     -- |Performs a breath-first-search on an SLDTree searching for solution
     bfs :: Strategy
-    bfs (SLDTree resolutions)
-        = concat $ List.transpose $ mapStrategy bfs resolutions
-    bfs Success
-        = [Subst.empty]
+    bfs Success                 = [Subst.empty]
+    bfs (SLDTree [])            = []
+    bfs tree@(SLDTree subst)    = [s | (s, Success) <- subst] ++ bfs (step tree)
+
+    step :: SLDTree -> SLDTree
+    step (SLDTree tree)
+        = SLDTree   [ (Subst.compose subSubst subst, subTree)
+                    | (subst                       , SLDTree subTrees) <- tree
+                    , (subSubst                    , subTree) <- subTrees
+                    ]
