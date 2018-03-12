@@ -29,6 +29,14 @@ module Strategy(dfs, bfs) where
     bfs (SLDTree [])            = []
     bfs tree@(SLDTree subst)    = [s | (s, Success) <- subst] ++ bfs (step tree)
 
+    {-|
+        Performs a step of execution for each resolution
+        Success and Empty Subtrees are removed
+        and for all other SubTrees the performed substitution
+        will be composed onto their subtrees substitution
+        returning a new SLDTree
+        of the resulting  SubSubTrees and their substitutions
+    -}
     step :: SLDTree -> SLDTree
     step (SLDTree tree)
         = SLDTree   [ (Subst.compose subSubst subst, subTree)
